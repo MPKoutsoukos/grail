@@ -62,7 +62,9 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.GRAIL_KEYSTORE_PASSWORD }}
         run: |
           test -n "$KEYSTORE_B64" || { echo "::error::The GRAIL_KEYSTORE_B64 secret is missing"; exit 1; }
-          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/grail.keystore"
+          # (stray whitespace or line endings in a pasted secret would break both, so they go)
+          printf '%s' "$KEYSTORE_B64" | tr -d '[:space:]' | base64 -d > "$RUNNER_TEMP/grail.keystore"
+          KEYSTORE_PASSWORD=$(printf '%s' "$KEYSTORE_PASSWORD" | tr -d '[:space:]')
           {
             echo "ORG_GRADLE_PROJECT_GRAIL_RELEASE_STORE_FILE=$RUNNER_TEMP/grail.keystore"
             echo "ORG_GRADLE_PROJECT_GRAIL_RELEASE_STORE_PASSWORD=$KEYSTORE_PASSWORD"
