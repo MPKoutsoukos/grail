@@ -12,5 +12,6 @@
   "scripts": {
     "test": "node --test \"src/**/*.test.ts\"",
     "typecheck": "tsc -p ."
-  }
+  },
+  "license": "GPL-3.0-only"
 }

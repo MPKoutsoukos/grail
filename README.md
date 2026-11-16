@@ -115,3 +115,16 @@ does all of it with a local toolchain.
 
 Expo and React Native, Reanimated, Gesture Handler, React Native Skia, Lucide icons, and the Newsreader, Inter
 and JetBrains Mono fonts. Every licence is listed in the app under Settings → About grail → Licences.
+
+## Licence
+
+grail is free software: you can use, study, share and change it under the terms of the
+[GNU General Public License, version 3](LICENSE) (GPL-3.0-only). If you share a changed version, it must stay
+under the same licence, with its source available. It comes with no warranty.
+
+© 2026 MPKoutsoukos. The copyright stays with its author, who may also offer grail under other terms.
+
+- **The name and look:** "grail", its wordmark and icons are not covered by the GPL; see [TRADEMARKS.md](TRADEMARKS.md).
+  Forks are welcome under their own name.
+- **Contributing:** see [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Libraries and fonts** keep their own licences (MIT, ISC, SIL OFL); every one is listed in the app.

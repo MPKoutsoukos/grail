@@ -6,5 +6,6 @@
   "scripts": {
     "test": "node --test packages/core/src/*.test.ts",
     "typecheck": "cd apps/mobile && npx tsc --noEmit"
-  }
+  },
+  "license": "GPL-3.0-only"
 }

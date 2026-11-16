@@ -12,6 +12,7 @@ import { buildInfo } from '../env'
 // Shown in the app and in the store listing; the page is the grail-site repo, hosted on GitHub Pages.
 export const PRIVACY_URL = 'https://grailnotebook.com/privacy/'
 export const CONTACT = 'hello@grailnotebook.com'
+export const SOURCE_URL = 'https://github.com/MPKoutsoukos/grail'
 
 // The About page's story, inspired by a talk on creativity as a system rather than a gift.
 type Story = { title: string; text: string; inspiredBy: string; url: string }
@@ -182,6 +183,15 @@ export function AboutScreen({ onBack, onOpenLicences }: { onBack: () => void; on
           <Row icon={<Icon.library color={c.paperDim} />} title="Licences" hint="The fonts, icons and libraries grail is built with"
             right={<Icon.chevronRight color={c.paperDimmer} size={18} />} onPress={onOpenLicences} />
         </Card>
+
+        {/* The GPL asks apps with a screen to show these: copyright, licence, no warranty, where the source is. */}
+        <Text style={{ fontFamily: F.sans, fontSize: 12, lineHeight: 18, color: c.paperDimmer, textAlign: 'center', marginTop: 24, paddingHorizontal: 8 }}>
+          © 2026 MPKoutsoukos. grail is free software: you can share and change it under the GNU General Public
+          License, version 3. It comes with no warranty. The grail name and look are trademarks.{'\n'}
+          <Text style={{ color: c.accentLight }} onPress={() => void Linking.openURL(SOURCE_URL)}>Source code</Text>
+          {' · '}
+          <Text style={{ color: c.accentLight }} onPress={() => void Linking.openURL('https://www.gnu.org/licenses/gpl-3.0.html')}>GPL v3</Text>
+        </Text>
       </ScrollView>
     </View>
   )
