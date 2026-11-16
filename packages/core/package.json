@@ -1,0 +1,16 @@
+{
+  "name": "@grail/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "grail's note format, vault, tags and themes: shared by the Android app (this repo) and grail-desktop. No dependencies.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "node --test \"src/**/*.test.ts\"",
+    "typecheck": "tsc -p ."
+  }
+}

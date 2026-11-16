@@ -1,0 +1,10 @@
+{
+  "name": "grail",
+  "private": true,
+  "type": "module",
+  "description": "grail: quiet, local-first markdown notes. apps/mobile (the Android app) and packages/core (shared with grail-desktop).",
+  "scripts": {
+    "test": "node --test packages/core/src/*.test.ts",
+    "typecheck": "cd apps/mobile && npx tsc --noEmit"
+  }
+}

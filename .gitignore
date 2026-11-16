@@ -1,0 +1,12 @@
+node_modules/
+.expo/
+.expo-export-check/
+apps/mobile/android/
+apps/mobile/ios/
+dist/
+*.apk
+*.aab
+*.jks
+*.keystore
+*.log
+.DS_Store

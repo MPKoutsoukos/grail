@@ -1,0 +1,124 @@
+# Builds the Android app for the branch's environment, signed, on every push:
+#   dev -> grail dev     qa -> grail qa     staging -> grail staging     main -> grail (prod)
+# Every build's APK is kept as a workflow artifact. main's also goes to the Releases page, newest marked Latest,
+# so the prod APK is always there to download. Then the desktop repo (grail-desktop) is moved to this commit on the
+# same branch, with this build's version and number, so it builds the matching desktop app.
+name: Android
+
+on:
+  push:
+    branches: [dev, qa, staging, main]
+  workflow_dispatch:
+
+concurrency:
+  group: android-${{ github.ref_name }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+env:
+  APP_ENV: ${{ github.ref_name == 'main' && 'prod' || github.ref_name }}
+  VERSION_CODE: ${{ github.run_number }}
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Install
+        working-directory: apps/mobile
+        run: npm ci --no-audit --no-fund
+
+      - name: Check
+        run: |
+          (cd apps/mobile && npx tsc --noEmit)
+          node --test packages/core/src/*.test.ts
+
+      - name: Version
+        id: version
+        working-directory: apps/mobile
+        run: echo "version=$(node -p "require('./app.json').expo.version")" >> "$GITHUB_OUTPUT"
+
+      - name: Signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.GRAIL_KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.GRAIL_KEYSTORE_PASSWORD }}
+        run: |
+          test -n "$KEYSTORE_B64" || { echo "::error::The GRAIL_KEYSTORE_B64 secret is missing"; exit 1; }
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/grail.keystore"
+          {
+            echo "ORG_GRADLE_PROJECT_GRAIL_RELEASE_STORE_FILE=$RUNNER_TEMP/grail.keystore"
+            echo "ORG_GRADLE_PROJECT_GRAIL_RELEASE_STORE_PASSWORD=$KEYSTORE_PASSWORD"
+            echo "ORG_GRADLE_PROJECT_GRAIL_RELEASE_KEY_ALIAS=grail"
+            echo "ORG_GRADLE_PROJECT_GRAIL_RELEASE_KEY_PASSWORD=$KEYSTORE_PASSWORD"
+          } >> "$GITHUB_ENV"
+
+      - name: Build
+        working-directory: apps/mobile
+        run: |
+          npx expo prebuild --platform android --no-install --clean
+          cd android && ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a --no-daemon
+
+      - name: Name the APK
+        id: apk
+        run: |
+          base="grail-${{ steps.version.outputs.version }}-${VERSION_CODE}"
+          [ "$APP_ENV" = prod ] || base="grail-${APP_ENV}-${{ steps.version.outputs.version }}-${VERSION_CODE}"
+          cp apps/mobile/android/app/build/outputs/apk/release/app-release.apk "$base.apk"
+          echo "file=$base.apk" >> "$GITHUB_OUTPUT"
+          "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/apksigner" verify --print-certs "$base.apk" | grep -m1 SHA-256
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.apk.outputs.file }}
+          path: ${{ steps.apk.outputs.file }}
+          retention-days: 30
+
+      - name: Release (prod)
+        if: github.ref_name == 'main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="v${{ steps.version.outputs.version }}-${VERSION_CODE}"
+          gh release create "$tag" "${{ steps.apk.outputs.file }}" --target "$GITHUB_SHA" --latest \
+            --title "grail ${{ steps.version.outputs.version }} (build ${VERSION_CODE})" \
+            --notes "grail for Android, built from ${GITHUB_SHA::7}. Install the APK on your phone (Android 7 or newer). The matching desktop app is on the grail-desktop Releases page."
+
+  mirror-desktop:
+    needs: apk
+    runs-on: ubuntu-latest
+    steps:
+      - name: Move grail-desktop to this commit
+        env:
+          DEPLOY_KEY: ${{ secrets.DESKTOP_DEPLOY_KEY }}
+          VERSION: ${{ needs.apk.outputs.version }}
+        run: |
+          test -n "$DEPLOY_KEY" || { echo "::error::The DESKTOP_DEPLOY_KEY secret is missing"; exit 1; }
+          mkdir -p ~/.ssh && echo "$DEPLOY_KEY" > ~/.ssh/desktop && chmod 600 ~/.ssh/desktop
+          export GIT_SSH_COMMAND="ssh -i ~/.ssh/desktop -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+          git clone --branch "$GITHUB_REF_NAME" "git@github.com:${GITHUB_REPOSITORY_OWNER}/grail-desktop.git" desktop
+          cd desktop
+          git submodule update --init grail
+          git -C grail fetch origin "$GITHUB_SHA" && git -C grail checkout "$GITHUB_SHA"
+          printf '{\n  "version": "%s",\n  "build": %s,\n  "env": "%s",\n  "grailCommit": "%s"\n}\n' "$VERSION" "$VERSION_CODE" "$APP_ENV" "$GITHUB_SHA" > mirror.json
+          git add grail mirror.json
+          git -c user.name="grail pipeline" -c user.email="pipeline@grailnotebook.com" \
+            commit -m "Mirror grail ${GITHUB_SHA::7}: version $VERSION, build $VERSION_CODE ($APP_ENV)"
+          git push origin "HEAD:$GITHUB_REF_NAME"
