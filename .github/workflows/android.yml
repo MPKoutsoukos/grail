@@ -94,7 +94,7 @@ jobs:
           echo "file=$base.apk" >> "$GITHUB_OUTPUT"
           "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/apksigner" verify --print-certs "$base.apk" | grep -m1 SHA-256
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.apk.outputs.file }}
           path: ${{ steps.apk.outputs.file }}
@@ -110,7 +110,7 @@ jobs:
 
       # For uploading to Play Console by hand: Actions -> this run -> Artifacts. Not on the Releases page, since
       # phones can't install an .aab.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: github.ref_name == 'main'
         with:
           name: ${{ steps.aab.outputs.file }}
