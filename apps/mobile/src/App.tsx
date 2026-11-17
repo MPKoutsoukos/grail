@@ -216,9 +216,14 @@ function Shell({ data }: { data: Data }) {
           onPersist={async (n, png, scene) => {
             // The scene is the source of truth; the PNG is a preview for lists and Read.
             await vault.writeScene(n.id, scene)
-            let drawingPath = n.drawingPath
-            if (png) { try { drawingPath = await vault.saveImage(`${n.id}.png`, png) } catch { /* keep the old preview */ } }
+            const old = n.drawingPath
+            let drawingPath = old
+            // A new name for every version: Android's image cache keys pictures by file, so
+            // rewriting one name would keep showing the first version until grail restarted.
+            if (png) { try { drawingPath = await vault.saveImage(`${n.id}-${Date.now().toString(36)}.png`, png) } catch { /* keep the old preview */ } }
             await data.saveNote({ ...n, ...(drawingPath ? { drawingPath } : {}) })
+            // Only once the note points at the new picture does the old one go.
+            if (old && old !== drawingPath && !old.startsWith('data:')) await vault.store.remove(old).catch(() => {})
           }}
           onDelete={(id) => { pop(); void data.deleteNote(id) }}
           onClose={pop} />

@@ -1,18 +1,20 @@
-// The phone drawing canvas (Skia). A stroke in progress lives entirely on the UI
-// thread — the gesture worklet appends points, Skia redraws the path — so ink
-// follows the finger at display rate. Only finished strokes reach React.
+// The phone drawing canvas, drawn with react-native-svg (plain source, no prebuilt
+// graphics binaries, so grail can be built from source by F-Droid). A stroke in
+// progress lives entirely on the UI thread: the gesture worklet appends points and
+// Reanimated feeds the path straight to the native SVG view, so ink follows the
+// finger at display rate. Only finished strokes reach React.
+//
+// The eraser cuts ink away (a photo underneath shows through): each run of eraser
+// strokes becomes a mask over everything drawn before it, never over what comes after.
 //
 // Same scene format as the desktop (@grail/core): the scene has its own size
 // and is scaled to fit, so drawings look the same on every device.
 
-import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Alert, Text, TextInput, View } from 'react-native'
-import {
-  Canvas, Group, Image as SkiaImage, Path, Rect, Skia, rect, useCanvasRef, usePathValue,
-  type SkImage, type SkPathBuilder,
-} from '@shopify/react-native-skia'
+import Svg, { G, Image as SvgImage, Mask, Path, Rect } from 'react-native-svg'
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler'
-import { useSharedValue } from 'react-native-reanimated'
+import Animated, { useAnimatedProps, useSharedValue } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Eraser, Minus, Pencil, Redo2, RectangleHorizontal, Circle, Undo2, BrushCleaning } from 'lucide-react-native'
@@ -34,51 +36,70 @@ const TOOLS: { tool: Tool; I: typeof Pencil; label: string }[] = [
 
 // ------------------------------------------------------------ geometry ---
 // Plain functions marked as worklets, so the UI thread (draft) and JS (saved
-// strokes) draw identically.
+// strokes) draw identically. They return SVG path data.
 
-function strokeInto(b: SkPathBuilder, pts: number[]) {
+const NOTHING = 'M0 0' // a path that draws nothing
+
+function strokeD(pts: number[]): string {
   'worklet'
-  if (pts.length < 2) return
-  b.moveTo(pts[0], pts[1])
-  if (pts.length === 2) { b.lineTo(pts[0] + 0.01, pts[1]); return }
+  if (pts.length < 2) return NOTHING
+  let d = `M${pts[0]} ${pts[1]}`
+  if (pts.length === 2) return `${d}L${pts[0] + 0.01} ${pts[1]}`
   for (let i = 2; i < pts.length - 2; i += 2) {
-    b.quadTo(pts[i], pts[i + 1], (pts[i] + pts[i + 2]) / 2, (pts[i + 1] + pts[i + 3]) / 2)
+    d += `Q${pts[i]} ${pts[i + 1]} ${(pts[i] + pts[i + 2]) / 2} ${(pts[i + 1] + pts[i + 3]) / 2}`
   }
-  b.lineTo(pts[pts.length - 2], pts[pts.length - 1])
+  return `${d}L${pts[pts.length - 2]} ${pts[pts.length - 1]}`
 }
 
-function elementInto(b: SkPathBuilder, el: SceneElement) {
+function elementD(el: SceneElement): string {
   'worklet'
-  if (el.tool === 'pen' || el.tool === 'eraser') { strokeInto(b, el.points ?? []); return }
+  if (el.tool === 'pen' || el.tool === 'eraser') return strokeD(el.points ?? [])
   if (el.tool === 'line') {
     const p = el.points ?? []
-    if (p.length >= 4) { b.moveTo(p[0], p[1]); b.lineTo(p[2], p[3]) }
-    return
+    return p.length >= 4 ? `M${p[0]} ${p[1]}L${p[2]} ${p[3]}` : NOTHING
   }
   let x = el.x ?? 0, y = el.y ?? 0, w = el.width ?? 0, h = el.height ?? 0
   if (w < 0) { x += w; w = -w }
   if (h < 0) { y += h; h = -h }
-  const r = { x, y, width: w, height: h }
-  if (el.tool === 'rect') b.addRect(r)
-  else b.addOval(r)
+  if (el.tool === 'rect') return `M${x} ${y}H${x + w}V${y + h}H${x}Z`
+  const rx = w / 2, ry = h / 2, cy = y + ry
+  return `M${x} ${cy}A${rx} ${ry} 0 1 0 ${x + w} ${cy}A${rx} ${ry} 0 1 0 ${x} ${cy}Z`
 }
 
-const ElementNode = memo(function ElementNode({ el }: { el: SceneElement }) {
-  const path = useMemo(() => {
-    const b = Skia.PathBuilder.Make()
-    elementInto(b, el)
-    return b.detach()
-  }, [el])
+const ElementNode = memo(function ElementNode({ el, stroke }: { el: SceneElement; stroke?: string }) {
+  const d = useMemo(() => elementD(el), [el])
   return (
-    <Path path={path} style="stroke" strokeWidth={el.strokeWidth} color={el.stroke}
-      strokeCap="round" strokeJoin="round" blendMode={el.tool === 'eraser' ? 'clear' : 'srcOver'} />
+    <Path d={d} fill="none" stroke={stroke ?? el.stroke} strokeWidth={el.strokeWidth}
+      strokeLinecap="round" strokeLinejoin="round" />
   )
 })
 
-function imageFromDataUrl(url: string): SkImage | null {
-  const comma = url.indexOf(',')
-  if (comma < 0) return null
-  return Skia.Image.MakeImageFromEncoded(Skia.Data.fromBase64(url.slice(comma + 1)))
+/** The finished elements. Each run of eraser strokes masks out everything drawn before it. */
+function Layers({ elements, w, h }: { elements: SceneElement[]; w: number; h: number }) {
+  let content: ReactNode[] = []
+  for (let i = 0; i < elements.length;) {
+    if (elements[i].tool !== 'eraser') { content.push(<ElementNode key={elements[i].id} el={elements[i]} />); i++; continue }
+    const run: SceneElement[] = []
+    while (i < elements.length && elements[i].tool === 'eraser') run.push(elements[i++])
+    const id = `erase-${run[0].id}`
+    content = [
+      <Mask key={`${id}-mask`} id={id} maskUnits="userSpaceOnUse" x={0} y={0} width={w} height={h}>
+        <Rect x={0} y={0} width={w} height={h} fill="white" />
+        {run.map((e) => <ElementNode key={e.id} el={e} stroke="black" />)}
+      </Mask>,
+      <G key={id} mask={`url(#${id})`}>{content}</G>,
+    ]
+  }
+  return <>{content}</>
+}
+
+const AnimatedPath = Animated.createAnimatedComponent(Path)
+
+/** Width and height from a PNG's header (older drawings were saved as plain PNGs). */
+function pngSize(b: Uint8Array): { w: number; h: number } | null {
+  if (b.length < 24 || b[1] !== 0x50 || b[2] !== 0x4e || b[3] !== 0x47) return null
+  const u32 = (o: number) => ((b[o] << 24) | (b[o + 1] << 16) | (b[o + 2] << 8) | b[o + 3]) >>> 0
+  return { w: u32(16), h: u32(20) }
 }
 
 // --------------------------------------------------------------- screen ---
@@ -93,7 +114,7 @@ export function DrawScreen({ note, readScene, readImage, onPersist, onDelete, on
 }) {
   const { c } = useTheme()
   const insets = useSafeAreaInsets()
-  const canvas = useCanvasRef()
+  const svg = useRef<Svg>(null)
   const [title, setTitle] = useState(note.title)
   const [view, setView] = useState<{ w: number; h: number } | null>(null)
   const [dims, setDims] = useState<{ w: number; h: number } | null>(null)
@@ -125,11 +146,11 @@ export function DrawScreen({ note, readScene, readImage, onPersist, onDelete, on
       } else if (note.drawingPath) {
         try {
           const bytes = await readImage(note.drawingPath)
-          const img = Skia.Image.MakeImageFromEncoded(Skia.Data.fromBytes(bytes))
-          if (img && !cancelled) {
+          const size = pngSize(bytes)
+          if (size && !cancelled) {
             setBackground(`data:image/png;base64,${toBase64(bytes)}`)
-            setDims({ w: img.width(), h: img.height() })
-          }
+            setDims(size)
+          } else if (!cancelled) setDims(view)
         } catch { if (!cancelled) setDims(view) }
       } else {
         setDims(view) // a new drawing takes this screen's size
@@ -139,7 +160,6 @@ export function DrawScreen({ note, readScene, readImage, onPersist, onDelete, on
     return () => { cancelled = true }
   }, [view, loaded, note.id, note.drawingPath, readScene, readImage])
 
-  const bgImage = useMemo(() => (background ? imageFromDataUrl(background) : null), [background])
   const fit = dims && view ? fitScene(dims, view) : null
 
   // ---- the stroke in progress: UI thread only ------------------------------
@@ -149,10 +169,9 @@ export function DrawScreen({ note, readScene, readImage, onPersist, onDelete, on
   useEffect(() => { if (fit) { fx.value = fit.x; fy.value = fit.y; fs.value = fit.scale } }, [fit, fx, fy, fs])
   useEffect(() => { toolV.value = tool; colorV.value = color; widthV.value = width }, [tool, color, width, toolV, colorV, widthV])
 
-  const draftPath = usePathValue((b) => {
-    'worklet'
+  const draftProps = useAnimatedProps(() => {
     const d = draft.value
-    if (d) elementInto(b, d)
+    return { d: d ? elementD(d) : NOTHING }
   })
 
   const commit = (el: SceneElement) => {
@@ -210,8 +229,13 @@ export function DrawScreen({ note, readScene, readImage, onPersist, onDelete, on
     let png: string | null = null
     if (withPreview) {
       try {
-        const img = canvas.current?.makeImageSnapshot(rect(fit.x, fit.y, dims.w * fit.scale, dims.h * fit.scale))
-        if (img) png = `data:image/png;base64,${img.encodeToBase64()}`
+        const base64 = await new Promise<string | null>((resolve) => {
+          const node = svg.current
+          if (!node) { resolve(null); return }
+          const t = setTimeout(() => resolve(null), 3000)
+          node.toDataURL((b64) => { clearTimeout(t); resolve(b64 || null) }, { width: Math.round(dims.w), height: Math.round(dims.h) })
+        })
+        if (base64) png = `data:image/png;base64,${base64}`
       } catch { /* the preview is best-effort; the scene is what matters */ }
     }
     const scene: Scene = { width: dims.w, height: dims.h, background, elements }
@@ -250,17 +274,17 @@ export function DrawScreen({ note, readScene, readImage, onPersist, onDelete, on
         onLayout={(e) => { const { width: w, height: h } = e.nativeEvent.layout; if (!view) setView({ w, h }) }}>
         {fit && dims && (
           <GestureDetector gesture={pan}>
-            <Canvas ref={canvas} style={{ flex: 1 }}>
-              <Group transform={[{ translateX: fit.x }, { translateY: fit.y }, { scale: fit.scale }]}>
-                <Rect x={0} y={0} width={dims.w} height={dims.h} color={DRAWING_PAPER} />
-                {bgImage && <SkiaImage image={bgImage} x={0} y={0} width={dims.w} height={dims.h} fit="fill" />}
-                <Group layer clip={rect(0, 0, dims.w, dims.h)}>
-                  {elements.map((el) => <ElementNode key={el.id} el={el} />)}
-                  <Path path={draftPath} style="stroke" strokeWidth={width} color={tool === 'eraser' ? DRAWING_PAPER : color}
-                    strokeCap="round" strokeJoin="round" blendMode={tool === 'eraser' ? 'clear' : 'srcOver'} />
-                </Group>
-              </Group>
-            </Canvas>
+            <View style={{ flex: 1 }} collapsable={false}>
+              <Svg ref={svg} pointerEvents="none" viewBox={`0 0 ${dims.w} ${dims.h}`}
+                width={dims.w * fit.scale} height={dims.h * fit.scale} style={{ position: 'absolute', left: fit.x, top: fit.y }}>
+                <Rect x={0} y={0} width={dims.w} height={dims.h} fill={DRAWING_PAPER} />
+                {background && <SvgImage href={{ uri: background }} x={0} y={0} width={dims.w} height={dims.h} preserveAspectRatio="none" />}
+                <Layers elements={elements} w={dims.w} h={dims.h} />
+                {/* The stroke in progress. An eraser shows as paper until it's finished, then cuts through. */}
+                <AnimatedPath animatedProps={draftProps} fill="none" stroke={tool === 'eraser' ? DRAWING_PAPER : color}
+                  strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" />
+              </Svg>
+            </View>
           </GestureDetector>
         )}
       </View>

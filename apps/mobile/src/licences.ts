@@ -32,11 +32,6 @@ export const NOTICES: Notice[] = [
     "copyright": "Copyright 2020 The Newsreader Project Authors (http://github.com/productiontype/Newsreader)"
   },
   {
-    "name": "@shopify/react-native-skia",
-    "licence": "MIT",
-    "copyright": "Copyright 2026-present, William Candillon"
-  },
-  {
     "name": "expo",
     "licence": "MIT",
     "copyright": "Copyright (c) 2015-present 650 Industries, Inc. (aka Expo)"
