@@ -14,8 +14,9 @@ concurrency:
   group: android-${{ github.ref_name }}
   cancel-in-progress: true
 
+# Read-only by default; only the apk job may write (to create the prod release).
 permissions:
-  contents: write
+  contents: read
 
 env:
   APP_ENV: ${{ github.ref_name == 'main' && 'prod' || github.ref_name }}
@@ -24,6 +25,8 @@ env:
 jobs:
   apk:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
@@ -40,7 +43,8 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - uses: gradle/actions/setup-gradle@v4
+      # Third-party action pinned to a commit (Dependabot keeps it current).
+      - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
 
       - name: Install
         working-directory: apps/mobile

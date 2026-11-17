@@ -6,18 +6,17 @@ grail is for long-running creative work that lives in fragments: ideas, characte
 things overheard. Every note is a plain markdown file on your own device. There's no account, no ads and no
 tracking.
 
-**Download:** the latest Android app is on the [Releases page](https://github.com/MPKoutsoukos/grail/releases/latest).
-The desktop app for Windows and Linux is in [grail-desktop](https://github.com/MPKoutsoukos/grail-desktop/releases/latest).
+Website: **https://grailnotebook.com**
 
-## Why
+## Get it
 
-Ideas rarely arrive when there is time for them. They turn up on a bus, half asleep, in the middle of something
-else, and land wherever is nearest. grail starts from a simple idea: creativity isn't a gift, it's a system. You
-don't wait for the one big idea; you build a place where small ones are kept, found again and set next to each
-other until they turn into something. grail is that place.
+| | Where |
+|---|---|
+| Android | the [Releases page](https://github.com/MPKoutsoukos/grail/releases/latest) (APK); F-Droid submission in progress |
+| Windows & Linux | [grail-desktop](https://github.com/MPKoutsoukos/grail-desktop/releases/latest) |
 
-Inspired by [“Creativity isn’t a gift, it’s a system”](https://www.youtube.com/watch?v=_QVYfPnNOg4) by Perry Daniels.
-The full story is in the app, under Settings → About grail.
+The APK on the Releases page and the F-Droid build are signed with different keys, so one can't update the other:
+pick one source and stay with it.
 
 ## What it does
 
@@ -31,14 +30,49 @@ The full story is in the app, under Settings → About grail.
 - **Link previews**, like in chat apps: a card with the page's title and picture under a link, fetched only
   when you ask (or always, if you choose so in Settings).
 
+grail grew out of the "grail method": one notebook for every idea, kept messy, and read back often. It was
+inspired by [a video by Perry Daniels](https://www.youtube.com/watch?v=_QVYfPnNOg4).
+
 ## Privacy
 
 Your notes, pictures and drawings stay in grail's own storage on your phone. grail goes online only for the
-link previews you ask for, and then fetches just that page. Nothing about your notes is ever sent anywhere.
-The full policy: [store/privacy.html](store/privacy.html) (published at grailnotebook.com/privacy).
+link previews you ask for, and then fetches just that page. Nothing about your notes is ever sent anywhere, and
+the app has no analytics, crash reporting or Google services. The full policy is at
+https://grailnotebook.com/privacy/ (a copy is in [store/privacy.html](store/privacy.html)).
 
-To keep a copy in Google Drive or open it on a computer, save a PDF snapshot (Read → Save a snapshot → Save as
-PDF), open it and share it to Drive. Settings → About grail walks through it.
+## In this repo
+
+```
+apps/mobile/       the Android app: Expo (React Native), native lists, gestures and animation
+packages/core/     shared with grail-desktop: note format, vault, tags, themes, drawings (no dependencies)
+fdroid/            the F-Droid build recipe (metadata/com.grailnotebook.app.yml in fdroiddata)
+fastlane/          store texts, icon and screenshots, as F-Droid reads them
+store/             Google Play texts, privacy page, feature graphic and screenshots
+scripts/           the F-Droid build check (run by the F-Droid workflow)
+PUBLISHING.md      how to publish: GitHub Releases, F-Droid, Google Play
+SECURITY.md        how to report a security problem
+```
+
+### Files on disk
+
+```
+1718267361000.md                 a note (frontmatter + markdown)
+1718267361000-<stamp>.png        a drawing's preview (a new name each time it changes)
+1718267361000.scene.json         the drawing's editable vector scene
+1718267361000-media.jpg          an image note's picture
+grail-review.json                Read arrangements (global + per tag)
+grail-views.json                 saved queries
+grail-settings.json              theme, cover, reading preferences
+```
+
+The same layout on the phone and in the desktop app's home folder.
+
+## Versions
+
+`apps/mobile/app.json` holds the version (`expo.version`, e.g. `1.0.1`) and its version code
+(`android.versionCode` = major × 10000 + minor × 100 + patch, e.g. `10001`). Releases are tagged `v1.0.1`.
+F-Droid builds one APK per phone type with version code × 10 + 1, 2 or 4. The pipeline's own APKs use its run
+number as the build number. Details in [PUBLISHING.md](PUBLISHING.md).
 
 ## Branches, environments and pipelines
 
@@ -50,19 +84,21 @@ every push. The four apps have their own names and IDs, so they can be installed
 | `dev` | dev | grail dev | `com.grailnotebook.app.dev` | the run's artifacts |
 | `qa` | qa | grail qa | `com.grailnotebook.app.qa` | the run's artifacts |
 | `staging` | staging | grail staging | `com.grailnotebook.app.staging` | the run's artifacts |
-| `main` | prod | grail | `com.grailnotebook.app` | the run's artifacts **and the [Releases page](https://github.com/MPKoutsoukos/grail/releases)** |
+| `main` | prod | grail | `com.grailnotebook.app` | the run's artifacts, **the [Releases page](https://github.com/MPKoutsoukos/grail/releases)**, and the Google Play bundle (`.aab`) as an artifact |
 
 Changes move up the chain: `dev` → `qa` → `staging` → `main`.
 
 Each run type-checks the app, runs the core's tests, and builds a signed APK named
-`grail[-env]-<version>-<build>.apk`. The build number is the pipeline's run number, so a newer build always
-installs over an older one. Non-prod builds show their environment beside the name in the app.
+`grail[-env]-<version>-<build>.apk`. Non-prod builds show their environment beside the name in the app.
 
 **The desktop app follows along.** After each APK, the pipeline moves
 [grail-desktop](https://github.com/MPKoutsoukos/grail-desktop) to this commit on the same branch (its `grail`
-submodule) and writes the version and build number into its `mirror.json`. That push starts the desktop
-pipeline, so every APK has a matching Windows and Linux build with the same version and environment, and prod's
-lands on grail-desktop's Releases page too.
+submodule) and writes the version and build number into its `mirror.json`, so every APK has a matching Windows
+and Linux build.
+
+**F-Droid check.** [The F-Droid workflow](.github/workflows/fdroid.yml) builds the recipe in `fdroid/` inside
+F-Droid's own build-server image, with `fdroid lint`, `rewritemeta`, the source scanner and
+`fdroid build --on-server`, on every push to `dev` that touches the app.
 
 ### Secrets the pipeline needs
 
@@ -72,32 +108,12 @@ lands on grail-desktop's Releases page too.
 | `GRAIL_KEYSTORE_PASSWORD` | its password (the same for the key) |
 | `DESKTOP_DEPLOY_KEY` | private half of a deploy key with write access to grail-desktop |
 
-## In this repo
-
-```
-apps/mobile/       the Android app: Expo (React Native), native lists, gestures and animation
-packages/core/     shared with grail-desktop: note format, vault, tags, themes, drawings (no dependencies)
-store/             Google Play texts, privacy page, feature graphic and screenshots
-PUBLISHING.md      how to publish on Google Play
-```
-
-### Files on disk
-
-```
-1718267361000.md            a note (frontmatter + markdown)
-1718267361000.png           a drawing's preview
-1718267361000.scene.json    the drawing's editable vector scene
-1718267361000-media.jpg     an image note's picture
-grail-review.json           Read arrangements (global + per tag)
-grail-views.json            saved queries
-grail-settings.json         theme, cover, reading preferences
-```
-
-The same layout on the phone and in the desktop app's home folder.
+They live in the repository's Actions secrets, never in the code. The workflows run on pushes and by hand only,
+never on pull requests from forks, so the secrets can't be reached from outside.
 
 ## Build it yourself
 
-Node 24, JDK 17 and the Android SDK.
+Node 22 or newer, JDK 17 (or 21) and the Android SDK.
 
 ```sh
 cd apps/mobile
@@ -108,13 +124,14 @@ cd android && ./gradlew assembleRelease
 ```
 
 Release builds are signed with the `GRAIL_RELEASE_*` settings in `~/.gradle/gradle.properties`; without them the
-APK is unsigned. `npm test` at the top runs the core's tests. On Windows, `apps/mobile/scripts/build-apk.ps1`
-does all of it with a local toolchain.
+APK comes out unsigned. `npm test` at the top runs the core's tests. On Windows,
+`apps/mobile/scripts/build-apk.ps1` does all of it with a local toolchain.
 
 ## Built with
 
-Expo and React Native, Reanimated, Gesture Handler, React Native Skia, Lucide icons, and the Newsreader, Inter
-and JetBrains Mono fonts. Every licence is listed in the app under Settings → About grail → Licences.
+Expo and React Native, Reanimated, Gesture Handler, react-native-svg, Lucide icons, and the Newsreader, Inter
+and JetBrains Mono fonts. Everything is built from source; there are no prebuilt graphics libraries and no
+Google Play Services. Every licence is listed in the app under Settings → About grail → Licences.
 
 ## Licence
 
@@ -127,4 +144,5 @@ under the same licence, with its source available. It comes with no warranty.
 - **The name and look:** "grail", its wordmark and icons are not covered by the GPL; see [TRADEMARKS.md](TRADEMARKS.md).
   Forks are welcome under their own name.
 - **Contributing:** see [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Security:** see [SECURITY.md](SECURITY.md).
 - **Libraries and fonts** keep their own licences (MIT, ISC, SIL OFL); every one is listed in the app.
