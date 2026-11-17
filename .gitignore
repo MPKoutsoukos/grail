@@ -10,3 +10,7 @@ dist/
 *.keystore
 *.log
 .DS_Store
+
+# F-Droid build check (scripts/fdroid-buildserver-check.sh)
+.fdroid-check/
+fdroid-check-output/

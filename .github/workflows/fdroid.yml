@@ -1,0 +1,52 @@
+name: F-Droid build
+
+# Builds the F-Droid recipe (fdroid/com.grailnotebook.app.yml) in F-Droid's own build-server image, with the
+# real `fdroid lint`, `fdroid rewritemeta`, source scanner and `fdroid build --on-server`, so problems show up
+# here and not in the fdroiddata merge request. Runs on pushes to dev that touch the app, its build or the
+# recipe, and by hand (Actions -> F-Droid build -> Run workflow).
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [dev]
+    paths:
+      - 'apps/mobile/**'
+      - 'packages/**'
+      - 'fdroid/**'
+      - 'fastlane/**'
+      - 'scripts/fdroid-buildserver-check.sh'
+      - '.github/workflows/fdroid.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fdroid-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  fdroid-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    container:
+      image: registry.gitlab.com/fdroid/fdroidserver:buildserver-trixie
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { abi: armeabi-v7a, versionCode: 100011 }
+          - { abi: arm64-v8a, versionCode: 100012 }
+          - { abi: x86_64, versionCode: 100014 }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the recipe with fdroidserver
+        run: bash scripts/fdroid-buildserver-check.sh "$GITHUB_SHA" "${{ matrix.versionCode }}"
+
+      - name: Upload the build and its logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fdroid-${{ matrix.abi }}
+          path: fdroid-check-output/
+          if-no-files-found: warn

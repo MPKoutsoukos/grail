@@ -1,0 +1,140 @@
+Categories:
+  - Note
+  - Writing
+License: GPL-3.0-only
+AuthorName: MPKoutsoukos
+AuthorEmail: hello@grailnotebook.com
+WebSite: https://grailnotebook.com
+SourceCode: https://github.com/MPKoutsoukos/grail
+IssueTracker: https://github.com/MPKoutsoukos/grail/issues
+Changelog: https://github.com/MPKoutsoukos/grail/releases
+
+AutoName: grail
+
+RepoType: git
+Repo: https://github.com/MPKoutsoukos/grail.git
+
+Builds:
+  - versionName: 1.0.1
+    versionCode: 100011
+    commit: v1.0.1
+    subdir: apps/mobile
+    sudo:
+      - echo 'deb https://deb.debian.org/debian forky main' > /etc/apt/sources.list.d/forky.list
+      - apt-get update
+      - apt-get install -y -t forky nodejs npm
+    init:
+      - export EXPO_NO_TELEMETRY=1
+      - npm ci
+    output: android/app/build/outputs/apk/release/app-release-unsigned.apk
+    prebuild:
+      - export EXPO_NO_TELEMETRY=1
+      - find node_modules -type f \( -name '*.gradle' -o -name '*.gradle.kts' -o -name
+        '*.kt' \) -exec sed -i -e 's/JavaVersion.VERSION_17/JavaVersion.VERSION_21/g'
+        -e 's/jvmToolchain(17)/jvmToolchain(21)/g' -e 's/JvmTarget.fromTarget("17")/JvmTarget.fromTarget("21")/g'
+        -e "s/jvmTarget = '17'/jvmTarget = '21'/g" {} +
+      - rm -rf node_modules/expo-modules-core/android/prebuilt
+      - find node_modules -type d -name local-maven-repo -prune -exec rm -rf {} +
+      - VERSION_CODE=$$VERCODE$$ ./node_modules/.bin/expo prebuild --platform android
+        --no-install
+      - sed -i '/signingConfig /d' android/app/build.gradle
+    scanignore:
+      - apps/mobile/node_modules/hermes-compiler/hermesc/linux64-bin/hermesc
+      - apps/mobile/node_modules/expo-modules-core/android/ExpoModulesCorePlugin.gradle
+      - apps/mobile/node_modules/react-native/ReactAndroid/publish.gradle
+      - apps/mobile/node_modules/react-native-safe-area-context/android/build.gradle
+      - apps/mobile/node_modules/react-native-svg/android/build.gradle
+    scandelete:
+      - apps/mobile/node_modules
+    build:
+      - export EXPO_NO_TELEMETRY=1
+      - cd android
+      - gradle assembleRelease -x lintVitalRelease "-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g"
+        -PreactNativeArchitectures=armeabi-v7a -PreactNativeDevServerIp=localhost
+    ndk: r27b
+
+  - versionName: 1.0.1
+    versionCode: 100012
+    commit: v1.0.1
+    subdir: apps/mobile
+    sudo:
+      - echo 'deb https://deb.debian.org/debian forky main' > /etc/apt/sources.list.d/forky.list
+      - apt-get update
+      - apt-get install -y -t forky nodejs npm
+    init:
+      - export EXPO_NO_TELEMETRY=1
+      - npm ci
+    output: android/app/build/outputs/apk/release/app-release-unsigned.apk
+    prebuild:
+      - export EXPO_NO_TELEMETRY=1
+      - find node_modules -type f \( -name '*.gradle' -o -name '*.gradle.kts' -o -name
+        '*.kt' \) -exec sed -i -e 's/JavaVersion.VERSION_17/JavaVersion.VERSION_21/g'
+        -e 's/jvmToolchain(17)/jvmToolchain(21)/g' -e 's/JvmTarget.fromTarget("17")/JvmTarget.fromTarget("21")/g'
+        -e "s/jvmTarget = '17'/jvmTarget = '21'/g" {} +
+      - rm -rf node_modules/expo-modules-core/android/prebuilt
+      - find node_modules -type d -name local-maven-repo -prune -exec rm -rf {} +
+      - VERSION_CODE=$$VERCODE$$ ./node_modules/.bin/expo prebuild --platform android
+        --no-install
+      - sed -i '/signingConfig /d' android/app/build.gradle
+    scanignore:
+      - apps/mobile/node_modules/hermes-compiler/hermesc/linux64-bin/hermesc
+      - apps/mobile/node_modules/expo-modules-core/android/ExpoModulesCorePlugin.gradle
+      - apps/mobile/node_modules/react-native/ReactAndroid/publish.gradle
+      - apps/mobile/node_modules/react-native-safe-area-context/android/build.gradle
+      - apps/mobile/node_modules/react-native-svg/android/build.gradle
+    scandelete:
+      - apps/mobile/node_modules
+    build:
+      - export EXPO_NO_TELEMETRY=1
+      - cd android
+      - gradle assembleRelease -x lintVitalRelease "-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g"
+        -PreactNativeArchitectures=arm64-v8a -PreactNativeDevServerIp=localhost
+    ndk: r27b
+
+  - versionName: 1.0.1
+    versionCode: 100014
+    commit: v1.0.1
+    subdir: apps/mobile
+    sudo:
+      - echo 'deb https://deb.debian.org/debian forky main' > /etc/apt/sources.list.d/forky.list
+      - apt-get update
+      - apt-get install -y -t forky nodejs npm
+    init:
+      - export EXPO_NO_TELEMETRY=1
+      - npm ci
+    output: android/app/build/outputs/apk/release/app-release-unsigned.apk
+    prebuild:
+      - export EXPO_NO_TELEMETRY=1
+      - find node_modules -type f \( -name '*.gradle' -o -name '*.gradle.kts' -o -name
+        '*.kt' \) -exec sed -i -e 's/JavaVersion.VERSION_17/JavaVersion.VERSION_21/g'
+        -e 's/jvmToolchain(17)/jvmToolchain(21)/g' -e 's/JvmTarget.fromTarget("17")/JvmTarget.fromTarget("21")/g'
+        -e "s/jvmTarget = '17'/jvmTarget = '21'/g" {} +
+      - rm -rf node_modules/expo-modules-core/android/prebuilt
+      - find node_modules -type d -name local-maven-repo -prune -exec rm -rf {} +
+      - VERSION_CODE=$$VERCODE$$ ./node_modules/.bin/expo prebuild --platform android
+        --no-install
+      - sed -i '/signingConfig /d' android/app/build.gradle
+    scanignore:
+      - apps/mobile/node_modules/hermes-compiler/hermesc/linux64-bin/hermesc
+      - apps/mobile/node_modules/expo-modules-core/android/ExpoModulesCorePlugin.gradle
+      - apps/mobile/node_modules/react-native/ReactAndroid/publish.gradle
+      - apps/mobile/node_modules/react-native-safe-area-context/android/build.gradle
+      - apps/mobile/node_modules/react-native-svg/android/build.gradle
+    scandelete:
+      - apps/mobile/node_modules
+    build:
+      - export EXPO_NO_TELEMETRY=1
+      - cd android
+      - gradle assembleRelease -x lintVitalRelease "-Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g"
+        -PreactNativeArchitectures=x86_64 -PreactNativeDevServerIp=localhost
+    ndk: r27b
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags ^v[\d.]+$
+VercodeOperation:
+  - 10 * %c + 1
+  - 10 * %c + 2
+  - 10 * %c + 4
+UpdateCheckData: apps/mobile/app.json|"versionCode":\s*(\d+)|apps/mobile/app.json|"version":\s*"([\d.]+)"
+CurrentVersion: 1.0.1
+CurrentVersionCode: 100014

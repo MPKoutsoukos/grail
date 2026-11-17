@@ -1,0 +1,44 @@
+grail is a quiet place for writing that comes in pieces: thoughts, characters, places, half-formed ideas. Each note is a fragment. grail gathers them into one continuous read, so you can come back and read your own work like a book.
+
+<b>Write in fragments</b>
+<ul>
+<li>Tap + and start writing. A fragment keeps its date and time, with no title needed.</li>
+<li>Bold, italics, headings, lists and quotes, in plain markdown.</li>
+<li>Tables, edited as a simple grid.</li>
+<li>Pictures from your gallery, and drawings on a pen canvas.</li>
+</ul>
+
+<b>Read it as one story</b>
+<ul>
+<li>Read stitches your fragments into a single flowing text, set in a calm serif.</li>
+<li>Four layouts: Manuscript, Timeline, Codex and Cards.</li>
+<li>A contents drawer for chapters, loose notes and anything you've set aside.</li>
+<li>Swipe a fragment left to delete it, or right to lift it out and place it somewhere else in the story.</li>
+</ul>
+
+<b>Tags as notebooks</b>
+<ul>
+<li>Write #tags anywhere. Every tag becomes its own notebook with its own read.</li>
+<li>Search with queries like "#travel #2026" or "#idea -#done", and save the ones you use.</li>
+</ul>
+
+<b>Snapshots and echoes</b>
+<ul>
+<li>Save a notebook as a Markdown note or a PDF, with its pictures, to keep a version or share it.</li>
+<li>Now and then, grail brings back an older fragment, especially on its anniversary.</li>
+</ul>
+
+<b>Make it yours</b>
+<ul>
+<li>Five themes: Ink, Reliquary, Vellum, Moss and Midnight.</li>
+<li>Serif, sans or mono reading text.</li>
+</ul>
+
+<b>Private by design</b>
+<ul>
+<li>Your notes stay on your phone, as plain markdown files.</li>
+<li>No account, no ads, no analytics, no tracking.</li>
+<li>Link previews, like in chat apps, only when you ask: grail goes online for nothing else.</li>
+</ul>
+
+grail is free software under the GNU GPL v3. Website: https://grailnotebook.com
