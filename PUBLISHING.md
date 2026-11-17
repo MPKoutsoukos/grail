@@ -70,6 +70,33 @@ Everything to paste is in [`store/listing.md`](store/listing.md).
 - [ ] Large-vault check: 1,000+ notes with pictures; watch scrolling and startup.
 - [ ] `aapt dump permissions` on the APK shows `INTERNET` (link previews only) and no camera, microphone or location.
 
+## F-Droid
+
+F-Droid builds grail from source on its own servers and signs it with its own key, so its grail and the
+GitHub/Play grail can't update each other (people pick one). Everything F-Droid reads lives in this repo:
+
+| What | Where |
+|---|---|
+| Build recipe (the file submitted to fdroiddata) | [`fdroid/com.grailnotebook.app.yml`](fdroid/com.grailnotebook.app.yml) |
+| Store texts, icon, screenshots, changelogs | [`fastlane/metadata/android/en-US/`](fastlane/metadata/android/en-US/) |
+| A build exactly as F-Droid does it | Actions → **F-Droid build** (runs on pushes to `dev`; also by hand) |
+
+**Versions.** `apps/mobile/app.json` holds the version (`1.0.1`) and its `versionCode`
+(`major*10000 + minor*100 + patch`, so 1.0.1 → 10001). F-Droid builds one APK per phone type with
+`versionCode × 10 + 1` (armeabi-v7a), `+ 2` (arm64-v8a), `+ 4` (x86_64), so 1.0.1 → 100011/100012/100014.
+The GitHub pipeline's own APKs keep using the run number; the two never meet, since the keys differ.
+
+**Each F-Droid release**
+1. Raise `expo.version` and `android.versionCode` in `apps/mobile/app.json` together (e.g. 1.0.2 / 10002).
+2. Add `fastlane/metadata/android/en-US/changelogs/<code>.txt` for the three F-Droid codes (100021, 100022, 100024).
+3. Push to `dev` and wait for **F-Droid build** to pass, then promote to `main`.
+4. Tag that commit on `main`: `git tag v1.0.2 && git push origin v1.0.2`. F-Droid's updater watches tags
+   matching `^v[\d.]+$` and reads the version from `app.json`, so after the first inclusion new releases are
+   picked up automatically.
+
+**Building the recipe locally** needs Docker or Linux; the pipeline's
+[`scripts/fdroid-buildserver-check.sh`](scripts/fdroid-buildserver-check.sh) is the reference.
+
 ## Not planned yet
 
 - **iOS:** it would need an Apple Developer membership and a Mac (or a cloud build service).
