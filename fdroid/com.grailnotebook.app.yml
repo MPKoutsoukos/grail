@@ -135,6 +135,7 @@ VercodeOperation:
   - 10 * %c + 1
   - 10 * %c + 2
   - 10 * %c + 4
-UpdateCheckData: apps/mobile/app.json|"versionCode":\s*(\d+)|apps/mobile/app.json|"version":\s*"([\d.]+)"
+UpdateCheckData: 
+  apps/mobile/app.json|"versionCode":\s*(\d+)|apps/mobile/app.json|"version":\s*"([\d.]+)"
 CurrentVersion: 1.0.1
 CurrentVersionCode: 100014
