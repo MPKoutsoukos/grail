@@ -35,7 +35,9 @@ Steps marked **(you)** need your accounts, money or decisions.
    (`versionCode`) needs no editing: the pipeline uses its run number, so it always goes up.
 2. Merge into `main`. The pipeline builds the APK, puts it on the Releases page, and builds the matching desktop
    app in [grail-desktop](https://github.com/MPKoutsoukos/grail-desktop).
-3. For Google Play, build the bundle (`.aab`) Play wants, with the same key:
+3. For Google Play, take the bundle (`.aab`) that build made: on GitHub, **Actions → Android → the run for that
+   commit on main → Artifacts → `grail-<version>-<build>.aab`** (a zip; the `.aab` is inside). It's signed with
+   the same key and kept for 90 days. To build one on this PC instead:
    ```powershell
    powershell -ExecutionPolicy Bypass -File apps\mobile\scripts\build-apk.ps1 -Bundle
    ```

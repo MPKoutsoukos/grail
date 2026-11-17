@@ -1,7 +1,7 @@
 # Builds the Android app for the branch's environment, signed, on every push:
 #   dev -> grail dev     qa -> grail qa     staging -> grail staging     main -> grail (prod)
 # Every build's APK is kept as a workflow artifact. main's also goes to the Releases page, newest marked Latest,
-# so the prod APK is always there to download. Then the desktop repo (grail-desktop) is moved to this commit on the
+# so the prod APK is always there to download, and main also keeps the Google Play bundle (.aab) as an artifact. Then the desktop repo (grail-desktop) is moved to this commit on the
 # same branch, with this build's version and number, so it builds the matching desktop app.
 name: Android
 
@@ -76,7 +76,10 @@ jobs:
         working-directory: apps/mobile
         run: |
           npx expo prebuild --platform android --no-install --clean
-          cd android && ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a,armeabi-v7a --no-daemon
+          # main also builds the bundle (.aab) for Google Play, signed with the same (upload) key
+          tasks=assembleRelease
+          [ "$APP_ENV" = prod ] && tasks="assembleRelease bundleRelease"
+          cd android && ./gradlew $tasks -PreactNativeArchitectures=arm64-v8a,armeabi-v7a --no-daemon
 
       - name: Name the APK
         id: apk
@@ -92,6 +95,23 @@ jobs:
           name: ${{ steps.apk.outputs.file }}
           path: ${{ steps.apk.outputs.file }}
           retention-days: 30
+
+      - name: Name the bundle (prod)
+        id: aab
+        if: github.ref_name == 'main'
+        run: |
+          file="grail-${{ steps.version.outputs.version }}-${VERSION_CODE}.aab"
+          cp apps/mobile/android/app/build/outputs/bundle/release/app-release.aab "$file"
+          echo "file=$file" >> "$GITHUB_OUTPUT"
+
+      # For uploading to Play Console by hand: Actions -> this run -> Artifacts. Not on the Releases page, since
+      # phones can't install an .aab.
+      - uses: actions/upload-artifact@v4
+        if: github.ref_name == 'main'
+        with:
+          name: ${{ steps.aab.outputs.file }}
+          path: ${{ steps.aab.outputs.file }}
+          retention-days: 90
 
       - name: Release (prod)
         if: github.ref_name == 'main'
