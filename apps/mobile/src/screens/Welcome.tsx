@@ -55,7 +55,7 @@ function WriteArt() {
         <Text style={{ fontFamily: F.serif, fontSize: 19, color: c.paper }}>{stamp()}</Text>
         <View style={[s.row, { gap: 5, backgroundColor: c.accent, borderRadius: 10, paddingHorizontal: 9, height: 26 }]}>
           <Icon.check color={c.onAccent} size={13} strokeWidth={2.5} />
-          <Text style={{ fontFamily: F.sansSemi, fontSize: 12, color: c.onAccent }}>Done</Text>
+          <Text style={{ fontFamily: F.sansSemi, fontSize: 12, color: c.onAccent }}>Save</Text>
         </View>
       </View>
       <View style={[s.row, { alignSelf: 'flex-start', gap: 5, backgroundColor: c.ink, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 }]}>
@@ -200,7 +200,7 @@ function FilesArt() {
 }
 
 const TOUR: { title: string; line: string; Art: () => React.ReactElement }[] = [
-  { title: 'Write it down', line: 'Tap + and write. Every note is dated, so it needs no title and no place. Done saves it (it also saves as you type).', Art: WriteArt },
+  { title: 'Write it down', line: 'Tap + and write. Every note is dated, so it needs no title and no place. Save keeps it and closes the note (it also saves as you type).', Art: WriteArt },
   { title: 'Read it back', line: 'Read stitches your dated notes into one text, oldest first.', Art: ReadArt },
   { title: 'Shape the read', line: 'Delete, move or take out fragments right in Read. Deleted notes wait in #deleted: search it to find them.', Art: ShapeArt },
   { title: 'Tag to gather', line: 'Write #book in any note. Each tag becomes its own notebook with its own read.', Art: TagArt },

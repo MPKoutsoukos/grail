@@ -91,7 +91,7 @@ export function EditorScreen({ note, clash, onResolveClash, onSave, onDelete, on
     return () => clearTimeout(t)
   }, [fresh])
 
-  /** Done: save now (if anything changed) and close. */
+  /** Save: save now (if anything changed) and close. */
   const done = () => {
     if (dirty && !paused) { onSave({ ...note, title, body }); setPersisted({ title, body }) }
     onClose()
@@ -167,10 +167,10 @@ export function EditorScreen({ note, clash, onResolveClash, onSave, onDelete, on
             {preview ? <Icon.pen color={c.accentLight} /> : <Icon.eye color={c.paperDim} />}
           </IconButton>
           <IconButton onPress={() => onDelete(note.id)} label="Delete"><Icon.trash color={c.paperDim} /></IconButton>
-          <Press onPress={done} haptic accessibilityLabel="Done: save and close"
+          <Press onPress={done} haptic accessibilityLabel="Save and close"
             style={[s.row, { gap: 6, backgroundColor: c.accent, borderRadius: 14, height: 38, paddingHorizontal: 14, marginLeft: 4, marginRight: 4 }]}>
             <Icon.check color={c.onAccent} size={18} strokeWidth={2.25} />
-            <Text style={{ fontFamily: F.sansSemi, fontSize: 14.5, color: c.onAccent }}>Done</Text>
+            <Text style={{ fontFamily: F.sansSemi, fontSize: 14.5, color: c.onAccent }}>Save</Text>
           </Press>
         </>}
       />

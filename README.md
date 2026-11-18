@@ -24,7 +24,7 @@ pick one source and stay with it.
   older fragment, anniversaries first.
 - **First start**: a five-step illustrated tour (write, read, shaping the read, tags, files), then the choice of
   home folder, and a screen saying which folder is in use. Settings shows the tour again.
-- **Writing**: a new note opens with the keyboard up; it saves as you type, and **Done** saves and closes.
+- **Writing**: a new note opens with the keyboard up; it saves as you type, and **Save** saves and closes.
 - **Read**: your fragments stitched into one continuous text, titles hidden, set in a serif reading face, in four
   layouts (Manuscript, Timeline, Codex, Cards). Swipe a fragment left to delete it, right to pick it up and place
   it elsewhere; long-press to edit, move or take it out of the read. Save the whole read as a Markdown or PDF

@@ -2,7 +2,7 @@ grail is a quiet place for writing that comes in pieces: thoughts, characters, p
 
 <b>Write in fragments</b>
 <ul>
-<li>Tap + and start writing: the keyboard is up, and the fragment keeps its date and time, with no title needed. It saves as you type; Done closes it.</li>
+<li>Tap + and start writing: the keyboard is up, and the fragment keeps its date and time, with no title needed. It saves as you type; Save closes it.</li>
 <li>Bold, italics, headings, lists and quotes, in plain markdown.</li>
 <li>Tables, edited as a simple grid.</li>
 <li>Pictures from your gallery, and drawings on a pen canvas.</li>

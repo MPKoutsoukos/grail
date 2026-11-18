@@ -2,14 +2,14 @@
   "expo": {
     "name": "grail",
     "slug": "grail",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#16130f",
     "icon": "./assets/icon.png",
     "android": {
       "package": "com.grailnotebook.app",
-      "versionCode": 10100,
+      "versionCode": 10101,
       "softwareKeyboardLayoutMode": "resize",
       "blockedPermissions": [
         "android.permission.ACCESS_NETWORK_STATE",

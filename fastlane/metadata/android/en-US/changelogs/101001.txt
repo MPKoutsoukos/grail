@@ -2,5 +2,5 @@ grail 1.1.0
 
 - A short illustrated tour on first start, then you choose where your notes live: grail's own folder, or a folder of yours, new or with notes already in it. grail then says which folder is in use, and Settings shows it.
 - Deleting a note moves it to #deleted instead of removing it: search #deleted to find it again.
-- A new note opens with the keyboard up, and a Done button saves and closes.
+- A new note opens with the keyboard up, and a Save button saves and closes.
 - Plain markdown from other apps keeps its own date and #tags.
