@@ -395,7 +395,7 @@ function Chosen({ data, first, onDone, onAgain }: { data: Data; first?: boolean;
           <Row icon={data.folderError ? <Icon.alert color="#f87171" /> : <Icon.doc color={c.paperDim} />}
             title={data.folderError ? 'grail can’t open this folder' : found}
             hint={data.folderError ?? (count && count.plain > 0
-              ? `${count.plain} of them are plain markdown from elsewhere. They show in Browse and under their #tags; Read gathers grail’s dated notes.`
+              ? `${count.plain === 1 ? "One of them is" : `${count.plain} of them are`} plain markdown from elsewhere, titled by file name. They show in Browse and under their #tags; Read gathers grail’s dated notes.`
               : undefined)} />
         </Card>
         <Text style={{ fontFamily: F.sans, fontSize: 13, lineHeight: 20, color: c.paperDimmer }}>

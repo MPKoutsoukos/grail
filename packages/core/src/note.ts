@@ -19,6 +19,8 @@ export interface Note {
   updated: number
   drawingPath?: string
   mediaPath?: string
+  /** Read from a file without grail's header (plain markdown from another app). Not saved: the first save adds the header. */
+  plain?: boolean
 }
 
 export type NoteKind = 'category' | 'timeline' | 'loose'
@@ -61,10 +63,14 @@ export function markdownToNote(filename: string, raw: string, fileTime?: number)
   const { data, body } = parseFrontmatter(raw)
   const type: NoteType = data.type === 'drawing' || data.type === 'media' || data.type === 'snapshot' ? data.type : 'text'
   const when = fileTime && fileTime > 0 ? fileTime : Date.now()
+  const plain = !hasFrontmatter(raw)
+  const name = filename.replace(/\.md$/, '')
   return {
-    id: str(data.id) ?? filename.replace(/\.md$/, ''),
+    id: str(data.id) ?? name,
     type,
-    title: str(data.title) ?? '',
+    // A plain file's name is its title ("Shopping list.md" → "Shopping list"), as in other markdown apps.
+    title: str(data.title) ?? (plain ? name : ''),
+    ...(plain ? { plain: true } : {}),
     body: body.trim(),
     // grail writes the body's #tags here on every save; a file without the list gets them from its text.
     tags: Array.isArray(data.tags) ? data.tags.map(String) : type === 'snapshot' ? [] : extractHashtags(body),

@@ -58,8 +58,7 @@ export function folderLabel(folder: HomeFolder): { title: string; detail: string
     const [vol, ...rest] = tree.split(':')
     const path = rest.join(':')
     if (u.includes('com.android.externalstorage.documents')) {
-      const where = vol === 'primary' ? 'phone storage' : 'SD card'
-      return { title: path || (vol === 'primary' ? 'Phone storage' : 'SD card'), detail: `On this phone’s ${where}` }
+      return { title: path || (vol === 'primary' ? 'Phone storage' : 'SD card'), detail: vol === 'primary' ? 'In this phone’s storage' : 'On the SD card' }
     }
     return { title: path || tree, detail: 'A folder you chose' }
   } catch {

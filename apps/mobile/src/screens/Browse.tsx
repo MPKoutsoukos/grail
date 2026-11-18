@@ -36,6 +36,7 @@ export function BrowseScreen({ notes, removedIds, echoes, onOpen, header }: {
   const [q, setQ] = useState('')
   const [salt, setSalt] = useState(0)
   const filtered = useMemo(() => notes.filter((n) => matchesText(n, q)), [notes, q])
+  const shown = useMemo(() => notes.filter((n) => !isDeleted(n)).length, [notes])
   const echo = useMemo(() => (echoes && !q ? pickEcho(notes, salt) : null), [echoes, q, notes, salt])
   const sections = useMemo(() => {
     if (q) return [{ title: '', data: filtered }]
@@ -54,7 +55,7 @@ export function BrowseScreen({ notes, removedIds, echoes, onOpen, header }: {
     <View style={{ flex: 1, backgroundColor: c.ink }}>
       <Header
         title={<EnvMark />}
-        sub={`${notes.length} ${notes.length === 1 ? 'fragment' : 'fragments'}`}
+        sub={`${shown} ${shown === 1 ? 'fragment' : 'fragments'}`}
         right={header}
       />
       <SectionList

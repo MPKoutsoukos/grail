@@ -78,7 +78,8 @@ test('plain markdown from another app: dated by the file, tags from its text', (
   assert.equal(n.created, 1700000000000)
   assert.equal(n.updated, 1700000000000)
   assert.deepEqual(n.tags, ['garden', 'books'])
-  assert.equal(n.title, '')
+  assert.equal(n.title, 'Shopping ideas')
+  assert.equal(n.plain, true)
 })
 
 test('a grail note keeps its own dates and tag list', () => {
