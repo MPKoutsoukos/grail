@@ -156,6 +156,11 @@ export function EditorScreen({ note, clash, onResolveClash, onSave, onDelete, on
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}>
         {incoming && <Banner text="This note changed on another device while you were writing." mine={() => { setIncoming(null); onSave({ ...note, title, body }); setPersisted({ title, body }) }} theirs={() => { setTitle(incoming.title); setBody(incoming.body); setPersisted(incoming); setIncoming(null) }} />}
         {!incoming && clash && <Banner text={`Changed on ${clash.device} ${ago(clash.at)}, while you were writing.`} mine={() => onResolveClash('mine')} theirs={() => onResolveClash('theirs')} />}
+        {/(^|\s)#deleted\b/i.test(body) && (
+          <Text style={{ fontFamily: F.sans, fontSize: 13, lineHeight: 19, color: c.paperDimmer, marginTop: 8 }}>
+            In #deleted, hidden everywhere. Take #deleted out of the text to bring it back; the bin icon deletes it for good.
+          </Text>
+        )}
 
         <TextInput value={title} onChangeText={setTitle} placeholder="Untitled" placeholderTextColor={c.paperDimmer}
           selectionColor={alpha(c.accentLight, 0.5)} style={{ fontFamily: F.serif, fontSize: 28, color: c.paper, paddingVertical: 4 }} />

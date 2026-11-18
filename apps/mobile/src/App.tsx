@@ -19,7 +19,7 @@ import { Inter_400Regular } from '@expo-google-fonts/inter/400Regular'
 import { Inter_500Medium } from '@expo-google-fonts/inter/500Medium'
 import { Inter_600SemiBold } from '@expo-google-fonts/inter/600SemiBold'
 import { JetBrainsMono_400Regular } from '@expo-google-fonts/jetbrains-mono/400Regular'
-import { categoryPool, collectCategories, extForMime, notebookMarkdown, noteKind, type Note, type NoteType } from '@grail/core'
+import { categoryPool, collectCategories, extForMime, isDeleted, notebookMarkdown, noteKind, type Note, type NoteType } from '@grail/core'
 import { DataProvider, type Data } from './data'
 import { PreviewsProvider } from './linkpreview'
 import { ThemeProvider, alpha, palette, F, useTheme } from './theme'
@@ -162,7 +162,7 @@ function Shell({ data }: { data: Data }) {
     await data.saveNote({ ...n, mediaPath: name })
   }
 
-  const eligible = data.notes.filter((n) => noteKind(n) === 'timeline')
+  const eligible = data.notes.filter((n) => noteKind(n) === 'timeline' && !isDeleted(n))
   const global = data.reviewView('', eligible)
   const [readNotebook, setReadNotebook] = useState<string | null>(null)
   const readEligible = readNotebook ? categoryPool(data.notes, readNotebook) : eligible
@@ -231,7 +231,7 @@ function Shell({ data }: { data: Data }) {
             // Only once the note points at the new picture does the old one go.
             if (old && old !== drawingPath && !old.startsWith('data:')) await home.store.remove(old).catch(() => {})
           }}
-          onDelete={(id) => { pop(); void data.deleteNote(id) }}
+          onDelete={(id) => { pop(); void (isDeleted(note) ? data.purgeNote(id) : data.deleteNote(id)) }}
           onClose={pop} />
       )
     } else if (note) {
@@ -240,10 +240,15 @@ function Shell({ data }: { data: Data }) {
           clash={null}
           onResolveClash={() => {}}
           onSave={data.saveNote}
-          onDelete={(id) => Alert.alert('Delete this note?', 'Its attachments go too.', [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Delete', style: 'destructive', onPress: () => { pop(); void data.deleteNote(id) } },
-          ])}
+          onDelete={(id) => (isDeleted(note)
+            ? Alert.alert('Delete this note for good?', 'It’s already in #deleted. Its file and pictures go, and it can’t be brought back.', [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Delete for good', style: 'destructive', onPress: () => { pop(); void data.purgeNote(id) } },
+            ])
+            : Alert.alert('Delete this note?', 'It moves to #deleted: hidden everywhere, but search #deleted to find it again.', [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Delete', style: 'destructive', onPress: () => { pop(); void data.deleteNote(id) } },
+            ]))}
           onClose={pop}
           onAttach={attach} />
       )

@@ -2,7 +2,7 @@
 // in the same files (and with the same rules) as the desktop app.
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { DEFAULT_THEME, SIDECARS, Home, type Note, type Theme } from '@grail/core'
+import { DEFAULT_THEME, SIDECARS, Home, isDeleted, markDeleted, type Note, type Theme } from '@grail/core'
 import { copyHome, deviceStore, loadFolder, saveFolder, type HomeFolder } from './store'
 import type { ReadingFont } from './theme'
 
@@ -132,7 +132,14 @@ function useData() {
 
   const createNote = useCallback(async (type: Note['type']) => saveNote(home!.newNote(type)), [home, saveNote])
 
+  /** Delete = move to #deleted: the note stays in its file, hidden until a search asks for #deleted. */
   const deleteNote = useCallback(async (id: string) => {
+    const note = notes.find((n) => n.id === id)
+    if (note && !isDeleted(note)) await saveNote(markDeleted(note))
+  }, [notes, saveNote])
+
+  /** Delete for good (from #deleted): the file and its pictures go. */
+  const purgeNote = useCallback(async (id: string) => {
     if (!home) return
     const note = notes.find((n) => n.id === id)
     if (note) await home.deleteNote(note)
@@ -170,8 +177,8 @@ function useData() {
     views,
     addView: (name: string, query: string) => setViews((p) => [...p, { id: String(Date.now()), name: name.trim() || 'Untitled view', query, created: Date.now() }]),
     removeView: (id: string) => setViews((p) => p.filter((v) => v.id !== id)),
-    reviewView, saveNote, createNote, deleteNote,
-  }), [folder, firstRun, folderError, setFolder, finishWelcome, home, notes, loading, settingsReady, settings, setSettings, views, setViews, reviewView, saveNote, createNote, deleteNote])
+    reviewView, saveNote, createNote, deleteNote, purgeNote,
+  }), [folder, firstRun, folderError, setFolder, finishWelcome, home, notes, loading, settingsReady, settings, setSettings, views, setViews, reviewView, saveNote, createNote, deleteNote, purgeNote])
 }
 
 export type Data = ReturnType<typeof useData>

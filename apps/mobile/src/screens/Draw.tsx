@@ -20,7 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Eraser, Minus, Pencil, Redo2, RectangleHorizontal, Circle, Undo2, BrushCleaning } from 'lucide-react-native'
 import {
   DRAWING_COLORS, DRAWING_PAPER, DRAWING_SIZES, fitScene, newElementId, normalizeElement, parseScene, sceneSize,
-  toBase64, type Note, type Scene, type SceneElement, type Tool,
+  isDeleted, toBase64, type Note, type Scene, type SceneElement, type Tool,
 } from '@grail/core'
 import { IconButton, Press, s } from '../ui'
 import { alpha, F, useTheme } from '../theme'
@@ -265,8 +265,10 @@ export function DrawScreen({ note, readScene, readImage, onPersist, onDelete, on
         <TextInput value={title} onChangeText={setTitle} placeholder="Untitled" placeholderTextColor={c.paperDimmer}
           style={{ flex: 1, fontFamily: F.serif, fontSize: 20, color: c.paper, paddingVertical: 4 }} />
         <Text style={{ fontFamily: F.sans, fontSize: 12, color: c.paperDimmer, marginHorizontal: 6 }}>{saving ? 'Saving…' : 'Saved'}</Text>
-        <IconButton label="Delete" onPress={() => Alert.alert('Delete this drawing?', undefined, [
-          { text: 'Cancel', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: () => onDelete(note.id) },
+        <IconButton label="Delete" onPress={() => Alert.alert(
+          isDeleted(note) ? 'Delete this drawing for good?' : 'Delete this drawing?',
+          isDeleted(note) ? 'It’s already in #deleted. Its file and pictures go, and it can’t be brought back.' : 'It moves to #deleted: hidden everywhere, but search #deleted to find it again.', [
+          { text: 'Cancel', style: 'cancel' }, { text: isDeleted(note) ? 'Delete for good' : 'Delete', style: 'destructive', onPress: () => onDelete(note.id) },
         ])}><Icon.trash color={c.paperDim} /></IconButton>
       </View>
 

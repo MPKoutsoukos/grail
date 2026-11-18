@@ -3,7 +3,7 @@
 // the UI can refresh without re-queueing them.
 
 import { bytesToDataUrl, dataUrlToBytes, extForMime } from './bytes.ts'
-import { defaultTitle, extractHashtags, hasFrontmatter, markdownToNote, noteToMarkdown, type Note } from './note.ts'
+import { DELETED_TAG, defaultTitle, extractHashtags, hasFrontmatter, markdownToNote, noteToMarkdown, type Note } from './note.ts'
 import { readText, writeText, type FileStore } from './store.ts'
 
 export const SIDECARS = {
@@ -67,7 +67,9 @@ export class Home {
   }
 
   async saveNote(note: Note): Promise<Note> {
-    const next = { ...note, tags: note.type === 'snapshot' ? [] : extractHashtags(note.body), updated: Date.now() }
+    // A snapshot carries no tags (so it stays out of the notebooks it copies), except #deleted.
+    const tags = extractHashtags(note.body)
+    const next = { ...note, tags: note.type === 'snapshot' ? tags.filter((t) => t === DELETED_TAG) : tags, updated: Date.now() }
     const name = `${note.id}.md`
     await writeText(this.store, name, noteToMarkdown(next))
     this.wrote(name)

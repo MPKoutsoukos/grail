@@ -1,5 +1,5 @@
 import type { Note } from './note.ts'
-import { inCategory } from './note.ts'
+import { inCategory, isDeleted, wantsDeleted } from './note.ts'
 
 // An Obsidian-like tag query. The string is whitespace-tokenised:
 //   #tag      → note belongs to category `tag`
@@ -47,7 +47,9 @@ function textHit(note: Note, needle: string): boolean {
 
 // Plain substring search over title/body/tags (empty = match all). Used by the
 // Browse tab and a category's drill-in — distinct from the #tag query grammar.
+// Notes in #deleted only show when the search mentions #deleted.
 export function matchesText(note: Note, q: string): boolean {
+  if (isDeleted(note) && !wantsDeleted(q)) return false
   const needle = q.trim().toLowerCase()
   return needle ? textHit(note, needle) : true
 }
@@ -62,6 +64,7 @@ export function isQueryActive(q: string): boolean {
 }
 
 export function matchesQuery(note: Note, q: string): boolean {
+  if (isDeleted(note) && !wantsDeleted(q)) return false
   const groups = parseQuery(q)
   if (groups.length === 0) return true
   return groups.some((g) => g.every((t) => termHolds(note, t)))

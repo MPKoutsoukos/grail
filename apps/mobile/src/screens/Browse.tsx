@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { SectionList, Text, View } from 'react-native'
 import Animated, { FadeIn } from 'react-native-reanimated'
-import { excerpt, matchesText, noteKind, type Note } from '@grail/core'
+import { excerpt, isDeleted, matchesText, noteKind, type Note } from '@grail/core'
 import { Empty, Eyebrow, Header, Press, SearchField } from '../ui'
 import { F, alpha, useTheme } from '../theme'
 import { Icon } from '../icons'
@@ -11,7 +11,7 @@ import { NoteRow, ago } from './NoteRow'
 // Echoes: an older fragment resurfaced, anniversaries first. Stable for the day.
 function pickEcho(notes: Note[], salt: number): Note | null {
   const now = new Date()
-  const old = notes.filter((n) => noteKind(n) === 'timeline' && n.body.trim() && now.getTime() - n.created > 7 * 86_400_000)
+  const old = notes.filter((n) => noteKind(n) === 'timeline' && !isDeleted(n) && n.body.trim() && now.getTime() - n.created > 7 * 86_400_000)
   if (!old.length) return null
   const anniversaries = old.filter((n) => new Date(n.created).getDate() === now.getDate())
   const pool = anniversaries.length ? anniversaries : old

@@ -77,7 +77,7 @@ export function ReadScreen({ notebook, onNotebook, tags, notes, template, header
   const choose = (tag: string | null) => { onNotebook?.(tag); setQ(tag ? `#${tag}` : ''); setFocus(false) }
 
   const askDelete = (n: Note) => {
-    Alert.alert('Delete this fragment?', excerpt(n.body, 80) || n.title, [
+    Alert.alert('Delete this fragment?', `${excerpt(n.body, 80) || n.title}\n\nIt moves to #deleted: hidden everywhere, but search #deleted to find it again.`, [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: () => onDelete(n.id) },
     ])

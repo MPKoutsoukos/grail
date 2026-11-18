@@ -93,7 +93,31 @@ export function looseTitle(note: Note): string {
   return !t || DATETIME_TITLE.test(t) ? 'Untitled' : t
 }
 
+// Deleting a note doesn't remove its file: it gets the #deleted tag, written into its text like any tag.
+// A #deleted note is hidden everywhere (Browse, Read, Tags, Echoes) until a search asks for #deleted;
+// taking the tag out of the text brings it back.
+export const DELETED_TAG = 'deleted'
+export const isDeleted = (note: Note) => note.tags.includes(DELETED_TAG)
+const DELETED_IN_TEXT = /(^|\s)#deleted(?![\wͰ-Ͽἀ-῿])/gi
+
+/** The note moved to #deleted (its text gains the tag on a line of its own). */
+export function markDeleted(note: Note): Note {
+  if (isDeleted(note)) return note
+  const body = note.body.trimEnd()
+  return { ...note, body: body ? `${body}\n\n#${DELETED_TAG}` : `#${DELETED_TAG}`, tags: [...note.tags, DELETED_TAG] }
+}
+
+/** The note out of #deleted again. */
+export function restoreNote(note: Note): Note {
+  const body = note.body.replace(DELETED_IN_TEXT, '$1').replace(/\n{3,}/g, '\n\n').trim()
+  return { ...note, body, tags: note.tags.filter((t) => t !== DELETED_TAG) }
+}
+
+/** Whether a search or query asks for deleted notes (it mentions #deleted). */
+export const wantsDeleted = (q: string) => /(^|\s)-?#deleted(?![\wͰ-Ͽἀ-῿])/i.test(q)
+
 export function inCategory(note: Note, cat: string): boolean {
+  if (cat !== DELETED_TAG && isDeleted(note)) return false
   return note.tags.includes(cat) || categoryName(note) === cat
 }
 
@@ -106,7 +130,9 @@ export function collectCategories(notes: Note[]): { name: string; count: number 
   }
   return [...names]
     .map((name) => ({ name, count: notes.filter((n) => inCategory(n, name)).length }))
-    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+    .filter((t) => t.count > 0)
+    // #deleted always comes last, after the tags in use
+    .sort((a, b) => Number(a.name === DELETED_TAG) - Number(b.name === DELETED_TAG) || b.count - a.count || a.name.localeCompare(b.name))
 }
 
 export function extractHashtags(text: string): string[] {
