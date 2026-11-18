@@ -4,19 +4,207 @@
 
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native'
-import Animated, { FadeIn, FadeInRight } from 'react-native-reanimated'
+import Animated, { FadeIn, FadeInDown, FadeInRight, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Button, Card, Divider, Header, Press, Row, s } from '../ui'
+import { Button, Card, Divider, Eyebrow, Header, Press, Row, s } from '../ui'
 import { alpha, F, useTheme } from '../theme'
 import { Icon, Wordmark } from '../icons'
 import type { Data } from '../data'
 import { countNotes, folderLabel, pickFolder, type HomeFolder } from '../store'
 
-const TOUR: { icon: keyof typeof Icon; title: string; text: string }[] = [
-  { icon: 'pen', title: 'Write it down', text: 'Tap + for a new note: a thought, a drawing, a picture. Every note is dated, so it needs no title and no place. Keep it messy.' },
-  { icon: 'read', title: 'Read it back', text: 'Read gathers your dated notes into one continuous text, oldest first, so a month of scraps reads like a draft. Long-press a fragment to edit it, move it or take it out of the read.' },
-  { icon: 'hash', title: 'Tag to gather', text: 'Write #ideas, #book or any #word in a note. Tags lists them, and each tag is its own notebook with its own read.' },
-  { icon: 'doc', title: 'Plain files, yours', text: 'Every note is a plain markdown file in a folder. Any app can open it, and you can back it up or move it. Next: which folder.' },
+// ---- the tour: each step shows a small moving picture of the real screen, and one line -----------
+
+const SAMPLE = 'The bus idea: a map of every stop, drawn from memory. #book'
+const stamp = () => {
+  const d = new Date(), p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`
+}
+
+/** Counts up 0..n, one every `ms` (looping back to 0 if `loop`): the pictures play out step by step. */
+function useReveal(n: number, ms: number, startAfter = 250, loop = false) {
+  const [k, setK] = useState(0)
+  useEffect(() => {
+    let i = 0
+    let t: ReturnType<typeof setInterval> | undefined
+    const s0 = setTimeout(() => {
+      t = setInterval(() => {
+        i = loop && i >= n ? 0 : i + 1
+        setK(i)
+        if (!loop && i >= n && t) clearInterval(t)
+      }, ms)
+    }, startAfter)
+    return () => { clearTimeout(s0); if (t) clearInterval(t) }
+  }, [n, ms, startAfter, loop])
+  return k
+}
+
+function Mock({ children }: { children: React.ReactNode }) {
+  const { c } = useTheme()
+  return <View style={{ backgroundColor: c.inkSurface, borderRadius: 22, padding: 18, gap: 10, minHeight: 240, justifyContent: 'center', overflow: 'hidden' }}>{children}</View>
+}
+
+/** 1. A new note, typing itself. */
+function WriteArt() {
+  const { c, read } = useTheme()
+  const n = useReveal(SAMPLE.length, 45, 400)
+  const typed = SAMPLE.slice(0, n)
+  const tag = typed.indexOf('#book')
+  return (
+    <Mock>
+      <View style={[s.row, { justifyContent: 'space-between' }]}>
+        <Text style={{ fontFamily: F.serif, fontSize: 19, color: c.paper }}>{stamp()}</Text>
+        <View style={[s.row, { gap: 5, backgroundColor: c.accent, borderRadius: 10, paddingHorizontal: 9, height: 26 }]}>
+          <Icon.check color={c.onAccent} size={13} strokeWidth={2.5} />
+          <Text style={{ fontFamily: F.sansSemi, fontSize: 12, color: c.onAccent }}>Done</Text>
+        </View>
+      </View>
+      <View style={[s.row, { alignSelf: 'flex-start', gap: 5, backgroundColor: c.ink, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 }]}>
+        <Icon.read size={11} color={c.accentLight} />
+        <Text style={{ fontFamily: F.sans, fontSize: 11, color: c.paperDimmer }}>Gathered into Read</Text>
+      </View>
+      <Text style={{ fontFamily: read, fontSize: 18, lineHeight: 28, color: c.paper, minHeight: 84 }}>
+        {tag >= 0 ? <>{typed.slice(0, tag)}<Text style={{ color: c.accentLight }}>{typed.slice(tag)}</Text></> : typed}
+        <Text style={{ color: c.accentLight }}>▍</Text>
+      </Text>
+    </Mock>
+  )
+}
+
+/** 2. Scattered notes, stitched into one read. */
+const FRAGMENTS = [
+  { day: '3 Nov', text: 'Saw a fox on the platform at six, unhurried, like it had a ticket.' },
+  { day: '', text: 'The bus idea: a map of every stop, drawn from memory.' },
+  { day: '12 Nov', text: 'Maybe the map is the book. Each stop, one chapter.' },
+]
+function ReadArt() {
+  const { c, read } = useTheme()
+  const k = useReveal(FRAGMENTS.length, 650)
+  return (
+    <Mock>
+      <Eyebrow style={{ marginBottom: 2 }}>Read</Eyebrow>
+      {FRAGMENTS.map((f, i) => i < k && (
+        <Animated.View key={i} entering={FadeInDown.duration(380)} style={[s.row, { alignItems: 'flex-start', gap: 10 }]}>
+          <Text style={{ width: 44, fontFamily: F.sans, fontSize: 11, lineHeight: 26, color: c.accentLight }}>{f.day}</Text>
+          <Text style={{ flex: 1, fontFamily: read, fontSize: 16.5, lineHeight: 26, color: c.paper }}>{f.text}</Text>
+        </Animated.View>
+      ))}
+    </Mock>
+  )
+}
+
+/**
+ * 3. Shaping the read, as a loop: swipe left (to #deleted), swipe right (pick up, place elsewhere),
+ * long-press (edit, move, take out).
+ */
+const SHAPE = ['Saw a fox on the platform at six.', 'A map of every stop.', 'Each stop, one chapter.']
+const STAGES = [
+  { row: -1, dx: 0, hint: '' },
+  { row: 0, dx: -96, hint: 'Swipe left: delete (to #deleted)' },
+  { row: -1, dx: 0, hint: '' },
+  { row: 2, dx: 96, hint: 'Swipe right: pick it up, then tap a gap to place it' },
+  { row: -1, dx: 0, hint: '' },
+  { row: 1, dx: 0, hint: 'Long-press: edit, move up or down, or take it out of the read' },
+]
+function ShapeRow({ text, dx, pressed, swipe }: { text: string; dx: number; pressed: boolean; swipe: 'left' | 'right' | null }) {
+  const { c, read } = useTheme()
+  const x = useSharedValue(0)
+  const sc = useSharedValue(1)
+  useEffect(() => { x.value = withTiming(dx, { duration: 420 }) }, [dx, x])
+  useEffect(() => { sc.value = withTiming(pressed ? 0.96 : 1, { duration: 260 }) }, [pressed, sc])
+  const st = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }, { scale: sc.value }] }))
+  return (
+    <View style={{ borderRadius: 14, overflow: 'hidden' }}>
+      <View style={[s.row, { position: 'absolute', inset: 0, paddingHorizontal: 16, justifyContent: swipe === 'right' ? 'flex-start' : 'flex-end',
+        backgroundColor: swipe === 'left' ? '#7f1d1d' : swipe === 'right' ? alpha(c.accent, 0.5) : 'transparent' }]}>
+        {swipe === 'left' && <Icon.trash color="#fecaca" size={18} />}
+        {swipe === 'right' && <Icon.chapters color={c.paper} size={18} />}
+      </View>
+      <Animated.View style={[st, { backgroundColor: pressed ? c.inkSurface2 : c.ink, paddingHorizontal: 14, paddingVertical: 11 }]}>
+        <Text style={{ fontFamily: read, fontSize: 15.5, color: c.paper }}>{text}</Text>
+      </Animated.View>
+    </View>
+  )
+}
+function ShapeArt() {
+  const { c } = useTheme()
+  const k = useReveal(STAGES.length - 1, 1300, 500, true)
+  const st = STAGES[k]
+  return (
+    <Mock>
+      {SHAPE.map((t, i) => (
+        <ShapeRow key={t} text={t} dx={st.row === i ? st.dx : 0} pressed={st.row === i && st.dx === 0}
+          swipe={st.row === i ? (st.dx < 0 ? 'left' : st.dx > 0 ? 'right' : null) : null} />
+      ))}
+      <Text style={{ fontFamily: F.sansMedium, fontSize: 13, lineHeight: 19, color: c.accentLight, minHeight: 38, marginTop: 4 }}>{st.hint}</Text>
+    </Mock>
+  )
+}
+
+/** 4. A #tag lighting up the notes that carry it. */
+const TAGGED = [
+  { text: 'A map of every stop', book: true },
+  { text: 'Call the bike shop', book: false },
+  { text: 'Each stop, one chapter', book: true },
+  { text: 'Tulips before the frost', book: false },
+]
+function TagArt() {
+  const { c } = useTheme()
+  const k = useReveal(2, 900, 600)
+  const lit = k >= 1
+  return (
+    <Mock>
+      {TAGGED.map((n) => (
+        <View key={n.text} style={[s.row, { gap: 10, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 9, backgroundColor: c.ink,
+          borderWidth: 1.5, borderColor: lit && n.book ? c.accentLight : 'transparent', opacity: lit && !n.book ? 0.4 : 1 }]}>
+          <Text style={{ flex: 1, fontFamily: F.sans, fontSize: 14, color: c.paper }}>{n.text}</Text>
+          {n.book && <Text style={{ fontFamily: F.sans, fontSize: 12.5, color: c.accentLight }}>#book</Text>}
+        </View>
+      ))}
+      {k >= 2 && (
+        <Animated.View entering={FadeIn.duration(300)} style={[s.row, { alignSelf: 'center', gap: 6, backgroundColor: alpha(c.accent, 0.18), borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6, marginTop: 4 }]}>
+          <Icon.hash size={14} color={c.accentLight} />
+          <Text style={{ fontFamily: F.sansMedium, fontSize: 13, color: c.accentLight }}>book · 2 notes · its own read</Text>
+        </Animated.View>
+      )}
+    </Mock>
+  )
+}
+
+/** 5. The notes as files in a folder. */
+const FILES = [
+  { name: '1763460120000.md', icon: 'doc' as const },
+  { name: '1763461980000.md', icon: 'doc' as const },
+  { name: '1763461980000-mf2k.png', icon: 'image' as const },
+  { name: 'grail-settings.json', icon: 'settings' as const },
+]
+function FilesArt() {
+  const { c } = useTheme()
+  const k = useReveal(FILES.length, 420)
+  return (
+    <Mock>
+      <View style={[s.row, { gap: 10, marginBottom: 4 }]}>
+        <Icon.library color={c.accentLight} size={20} />
+        <Text style={{ fontFamily: F.sansMedium, fontSize: 15, color: c.paper }}>your folder</Text>
+      </View>
+      {FILES.map((f, i) => {
+        const G = Icon[f.icon]
+        return i < k && (
+          <Animated.View key={f.name} entering={FadeInRight.duration(300)} style={[s.row, { gap: 10, paddingLeft: 12 }]}>
+            <G color={c.paperDimmer} size={16} />
+            <Text style={{ fontFamily: F.mono, fontSize: 12.5, color: c.paperDim }}>{f.name}</Text>
+          </Animated.View>
+        )
+      })}
+    </Mock>
+  )
+}
+
+const TOUR: { title: string; line: string; Art: () => React.ReactElement }[] = [
+  { title: 'Write it down', line: 'Tap + and write. Every note is dated, so it needs no title and no place. Done saves it (it also saves as you type).', Art: WriteArt },
+  { title: 'Read it back', line: 'Read stitches your dated notes into one text, oldest first.', Art: ReadArt },
+  { title: 'Shape the read', line: 'Delete, move or take out fragments right in Read. Deleted notes wait in #deleted: search it to find them.', Art: ShapeArt },
+  { title: 'Tag to gather', line: 'Write #book in any note. Each tag becomes its own notebook with its own read.', Art: TagArt },
+  { title: 'Plain files, yours', line: 'Every note is a markdown file in a folder you choose. Next: which one.', Art: FilesArt },
 ]
 
 function Dots({ n, at }: { n: number; at: number }) {
@@ -41,7 +229,6 @@ export function WelcomeScreen({ data, tourOnly, onDone }: { data: Data; tourOnly
     return <FolderStep data={data} first onDone={() => data.finishWelcome()} onBack={() => setStep(last)} />
   }
   const t = TOUR[step]
-  const Glyph = Icon[t.icon]
   return (
     <View style={{ flex: 1, backgroundColor: c.ink, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 16, paddingHorizontal: 24 }}>
       <View style={[s.row, { justifyContent: 'space-between', height: 44 }]}>
@@ -50,12 +237,12 @@ export function WelcomeScreen({ data, tourOnly, onDone }: { data: Data; tourOnly
           <Text style={{ fontFamily: F.sans, fontSize: 14, color: c.paperDimmer }}>{tourOnly ? 'Close' : 'Skip'}</Text>
         </Press>
       </View>
-      <Animated.View key={step} entering={FadeInRight.duration(260)} style={{ flex: 1, justifyContent: 'center' }}>
-        <View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: alpha(c.accent, 0.16), alignItems: 'center', justifyContent: 'center', marginBottom: 28 }}>
-          <Glyph color={c.accentLight} size={32} />
+      <Animated.View key={step} entering={FadeInRight.duration(260)} style={{ flex: 1, justifyContent: 'center', gap: 28 }}>
+        <t.Art />
+        <View>
+          <Text style={{ fontFamily: F.serif, fontSize: 32, lineHeight: 38, color: c.paper, marginBottom: 8 }}>{t.title}</Text>
+          <Text style={{ fontFamily: F.sans, fontSize: 16.5, lineHeight: 25, color: c.paperDim }}>{t.line}</Text>
         </View>
-        <Text style={{ fontFamily: F.serif, fontSize: 34, lineHeight: 40, color: c.paper, marginBottom: 14 }}>{t.title}</Text>
-        <Text style={{ fontFamily: F.sans, fontSize: 16.5, lineHeight: 26, color: c.paperDim }}>{t.text}</Text>
       </Animated.View>
       <Dots n={TOUR.length} at={step} />
       <View style={[s.row, { gap: 10, marginTop: 20 }]}>

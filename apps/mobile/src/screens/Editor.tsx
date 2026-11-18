@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Alert, Image, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View } from 'react-native'
+import { Alert, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { categoryName, noteKind, type Note } from '@grail/core'
@@ -81,6 +81,22 @@ export function EditorScreen({ note, clash, onResolveClash, onSave, onDelete, on
     if (l.dirty) l.onSave({ ...l.note, title: l.title, body: l.body })
   }, [])
 
+  // A new note opens ready to type. autoFocus alone loses to the screen's opening animation on
+  // Android, so the first text field is focused once the screen has settled.
+  const firstText = useRef<React.ComponentRef<typeof TextInput>>(null)
+  const fresh = !note.body && (note.type === 'text' || note.type === 'snapshot')
+  useEffect(() => {
+    if (!fresh) return
+    const t = setTimeout(() => firstText.current?.focus(), 350)
+    return () => clearTimeout(t)
+  }, [fresh])
+
+  /** Done: save now (if anything changed) and close. */
+  const done = () => {
+    if (dirty && !paused) { onSave({ ...note, title, body }); setPersisted({ title, body }) }
+    onClose()
+  }
+
   const setSeg = (i: number, val: string | string[][]) => {
     const next = segs.map((s, j) => (j === i ? (typeof val === 'string' ? { kind: 'text' as const, text: val } : { kind: 'table' as const, rows: val }) : s))
     setBody(joinSegments(next))
@@ -151,6 +167,11 @@ export function EditorScreen({ note, clash, onResolveClash, onSave, onDelete, on
             {preview ? <Icon.pen color={c.accentLight} /> : <Icon.eye color={c.paperDim} />}
           </IconButton>
           <IconButton onPress={() => onDelete(note.id)} label="Delete"><Icon.trash color={c.paperDim} /></IconButton>
+          <Press onPress={done} haptic accessibilityLabel="Done: save and close"
+            style={[s.row, { gap: 6, backgroundColor: c.accent, borderRadius: 14, height: 38, paddingHorizontal: 14, marginLeft: 4, marginRight: 4 }]}>
+            <Icon.check color={c.onAccent} size={18} strokeWidth={2.25} />
+            <Text style={{ fontFamily: F.sansSemi, fontSize: 14.5, color: c.onAccent }}>Done</Text>
+          </Press>
         </>}
       />
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}>
@@ -206,13 +227,14 @@ export function EditorScreen({ note, clash, onResolveClash, onSave, onDelete, on
                   </IconButton>
                 </View>
               </View>
-            : <TextInput key={`x${i}`} value={seg.text} onChangeText={(v) => setSeg(i, v)} multiline scrollEnabled={false}
+            : <TextInput key={`x${i}`} ref={i === 0 ? firstText : undefined} value={seg.text} onChangeText={(v) => setSeg(i, v)} multiline scrollEnabled={false}
                 selection={forced && forced.i === i ? { start: forced.start, end: forced.end } : undefined}
                 onSelectionChange={(e) => { sel.current = { i, start: e.nativeEvent.selection.start, end: e.nativeEvent.selection.end }; if (forced) setForced(undefined) }}
-                autoFocus={!note.body && note.type === 'text' && i === 0}
                 placeholder={i === 0 ? 'Begin anywhere…' : ''} placeholderTextColor={c.paperDimmer}
                 selectionColor={alpha(c.accentLight, 0.5)} textAlignVertical="top"
                 style={{ fontFamily: read, fontSize: 19, lineHeight: 31, color: c.paper, minHeight: segs.length === 1 ? 320 : 48 }} />)}
+        {/* The space under the text: a tap there puts the cursor at the end, ready to type. */}
+        {!preview && <Pressable onPress={() => firstText.current?.focus()} style={{ minHeight: 160 }} accessibilityLabel="Write" />}
       </ScrollView>
       {!preview && (
         <View style={[s.row, { borderTopWidth: 1, borderTopColor: c.inkSurface2, backgroundColor: c.ink, paddingHorizontal: 8, paddingTop: 4, paddingBottom: Math.max(insets.bottom, 4) }]}>
