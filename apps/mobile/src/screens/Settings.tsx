@@ -68,7 +68,7 @@ export function SettingsScreen({ data, onBack, onOpenAbout, onOpenHome, onOpenTo
           <Row icon={<Icon.library color={c.paperDim} />} title="Home folder" hint={`${where.title}\n${where.detail}`}
             right={<Icon.chevronRight color={c.paperDimmer} size={18} />} onPress={onOpenHome} />
           <Divider />
-          <Row icon={<Icon.sparkle color={c.paperDim} />} title="Show the tour" hint="The four-step introduction from the first start"
+          <Row icon={<Icon.sparkle color={c.paperDim} />} title="Show the tour" hint="The illustrated introduction from the first start"
             right={<Icon.chevronRight color={c.paperDimmer} size={18} />} onPress={onOpenTour} />
         </Card>
 
