@@ -127,7 +127,7 @@ export const Markdown = memo(function Markdown({ text, size = 18 }: { text: stri
               </ScrollView>
             )
           case 'hr':
-            return <Text key={i} style={{ textAlign: 'center', color: alpha(c.paperDimmer, 0.6), marginVertical: 14 }}>⁂</Text>
+            return <View key={i} style={{ alignSelf: 'center', width: 56, height: 1, backgroundColor: c.inkSurface2, marginVertical: 18 }} />
           default:
             return <Text key={i} style={{ ...base, marginVertical: 6 }}><Inline text={b.text} /></Text>
         } })()
