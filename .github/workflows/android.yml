@@ -126,6 +126,11 @@ jobs:
           gh release create "$tag" "${{ steps.apk.outputs.file }}" --target "$GITHUB_SHA" --latest \
             --title "grail ${{ steps.version.outputs.version }} (build ${VERSION_CODE})" \
             --notes "grail for Android, built from ${GITHUB_SHA::7}. Install the APK on your phone (Android 7 or newer). The matching desktop app is on the grail-desktop Releases page."
+          # F-Droid finds new versions by plain version tags (vX.Y.Z, see fdroid/com.grailnotebook.app.yml), so the
+          # first release of a version also gets one, on the same commit. Later builds of that version don't move it.
+          plain="v${{ steps.version.outputs.version }}"
+          gh api "repos/$GITHUB_REPOSITORY/git/refs/tags/$plain" >/dev/null 2>&1 \
+            || gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$plain" -f sha="$GITHUB_SHA" >/dev/null
 
   mirror-desktop:
     needs: apk

@@ -15,9 +15,9 @@ RepoType: git
 Repo: https://github.com/MPKoutsoukos/grail.git
 
 Builds:
-  - versionName: 1.0.1
-    versionCode: 100011
-    commit: e0b5175203584523ecde0303d5210c2d804033c3
+  - versionName: 1.1.1
+    versionCode: 101011
+    commit: c0fb005406d2ee160429cc6dc75e4f9d8df8a9b9
     subdir: apps/mobile
     sudo:
       - echo 'deb https://deb.debian.org/debian forky main' > /etc/apt/sources.list.d/forky.list
@@ -53,9 +53,9 @@ Builds:
         -PreactNativeArchitectures=armeabi-v7a -PreactNativeDevServerIp=localhost
     ndk: r27b
 
-  - versionName: 1.0.1
-    versionCode: 100012
-    commit: e0b5175203584523ecde0303d5210c2d804033c3
+  - versionName: 1.1.1
+    versionCode: 101012
+    commit: c0fb005406d2ee160429cc6dc75e4f9d8df8a9b9
     subdir: apps/mobile
     sudo:
       - echo 'deb https://deb.debian.org/debian forky main' > /etc/apt/sources.list.d/forky.list
@@ -91,9 +91,9 @@ Builds:
         -PreactNativeArchitectures=arm64-v8a -PreactNativeDevServerIp=localhost
     ndk: r27b
 
-  - versionName: 1.0.1
-    versionCode: 100014
-    commit: e0b5175203584523ecde0303d5210c2d804033c3
+  - versionName: 1.1.1
+    versionCode: 101014
+    commit: c0fb005406d2ee160429cc6dc75e4f9d8df8a9b9
     subdir: apps/mobile
     sudo:
       - echo 'deb https://deb.debian.org/debian forky main' > /etc/apt/sources.list.d/forky.list
@@ -137,5 +137,5 @@ VercodeOperation:
   - 10 * %c + 4
 UpdateCheckData: 
   apps/mobile/app.json|"versionCode":\s*(\d+)|apps/mobile/app.json|"version":\s*"([\d.]+)"
-CurrentVersion: 1.0.1
-CurrentVersionCode: 100014
+CurrentVersion: 1.1.1
+CurrentVersionCode: 101014
