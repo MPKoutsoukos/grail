@@ -71,3 +71,18 @@ test('scenes: older drawings get a size that holds everything; fitting centres t
   assert.equal(f.y, 0)
   assert.equal(parseScene('not json'), null)
 })
+
+test('plain markdown from another app: dated by the file, tags from its text', () => {
+  const n = markdownToNote('Shopping ideas.md', 'Some thoughts #Garden and #books\n', 1700000000000)
+  assert.equal(n.id, 'Shopping ideas')
+  assert.equal(n.created, 1700000000000)
+  assert.equal(n.updated, 1700000000000)
+  assert.deepEqual(n.tags, ['garden', 'books'])
+  assert.equal(n.title, '')
+})
+
+test('a grail note keeps its own dates and tag list', () => {
+  const n = markdownToNote('1718267361000.md', GRAY, 5)
+  assert.equal(n.created, 1718267361000)
+  assert.deepEqual(n.tags, ['worldbuilding', 'npcs'])
+})

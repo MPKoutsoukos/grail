@@ -1,9 +1,9 @@
-// The vault: grail's notes and sidecars on top of a FileStore. Local writes are
+// The home: grail's notes and sidecars on top of a FileStore. Local writes are
 // announced (sync queues them); files sync writes are announced separately, so
 // the UI can refresh without re-queueing them.
 
 import { bytesToDataUrl, dataUrlToBytes, extForMime } from './bytes.ts'
-import { defaultTitle, extractHashtags, markdownToNote, noteToMarkdown, type Note } from './note.ts'
+import { defaultTitle, extractHashtags, hasFrontmatter, markdownToNote, noteToMarkdown, type Note } from './note.ts'
 import { readText, writeText, type FileStore } from './store.ts'
 
 export const SIDECARS = {
@@ -13,7 +13,7 @@ export const SIDECARS = {
 } as const
 
 /** Files grail owns and syncs. Anything else in the folder is left alone. */
-export function isVaultFile(name: string): boolean {
+export function isHomeFile(name: string): boolean {
   if (name.startsWith('.') || name.includes('/') || name.includes('\\')) return false
   return /\.(md|png|jpe?g|webp|gif|pdf)$/i.test(name) ||
     name.endsWith('.scene.json') ||
@@ -22,7 +22,7 @@ export function isVaultFile(name: string): boolean {
 
 type Listener = (names: string[]) => void
 
-export class Vault {
+export class Home {
   readonly store: FileStore
   private local = new Set<Listener>()
   private remote = new Set<Listener>()
@@ -46,9 +46,13 @@ export class Vault {
 
   // ---- notes ---------------------------------------------------------------
   async loadNotes(): Promise<Note[]> {
-    const names = (await this.store.list()).filter((n) => n.endsWith('.md') && isVaultFile(n))
+    const names = (await this.store.list()).filter((n) => n.endsWith('.md') && isHomeFile(n))
     const notes = await Promise.all(names.map(async (n) => {
-      try { return markdownToNote(n, await readText(this.store, n)) } catch { return null }
+      try {
+        const raw = await readText(this.store, n)
+        const time = hasFrontmatter(raw) ? undefined : (await this.store.stat?.(n).catch(() => null))?.mtime
+        return markdownToNote(n, raw, time)
+      } catch { return null }
     }))
     return notes.filter((n): n is Note => !!n).sort((a, b) => b.created - a.created)
   }

@@ -1,4 +1,4 @@
-// Small, dependency-free byte helpers shared by the vault adapters and sync.
+// Small, dependency-free byte helpers shared by the home adapters and sync.
 
 const enc = new TextEncoder()
 const dec = new TextDecoder()

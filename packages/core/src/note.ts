@@ -50,18 +50,26 @@ export function noteToMarkdown(note: Note): string {
 const str = (v: unknown) => (v == null ? undefined : String(v))
 const num = (v: unknown, fallback: number) => (typeof v === 'number' && Number.isFinite(v) ? v : Number(v) || fallback)
 
-export function markdownToNote(filename: string, raw: string): Note {
+/** Whether a file starts with a frontmatter block (grail's notes always do; plain markdown from elsewhere may not). */
+export const hasFrontmatter = (raw: string) => /^﻿?---[ \t]*\r?\n/.test(raw)
+
+/**
+ * `fileTime` (the file's modification time) dates a note that has no dates of its own, such as plain
+ * markdown from another app, so it keeps its place instead of looking new on every start.
+ */
+export function markdownToNote(filename: string, raw: string, fileTime?: number): Note {
   const { data, body } = parseFrontmatter(raw)
   const type: NoteType = data.type === 'drawing' || data.type === 'media' || data.type === 'snapshot' ? data.type : 'text'
-  const now = Date.now()
+  const when = fileTime && fileTime > 0 ? fileTime : Date.now()
   return {
     id: str(data.id) ?? filename.replace(/\.md$/, ''),
     type,
     title: str(data.title) ?? '',
     body: body.trim(),
-    tags: Array.isArray(data.tags) ? data.tags.map(String) : [],
-    created: num(data.created, now),
-    updated: num(data.updated, now),
+    // grail writes the body's #tags here on every save; a file without the list gets them from its text.
+    tags: Array.isArray(data.tags) ? data.tags.map(String) : type === 'snapshot' ? [] : extractHashtags(body),
+    created: num(data.created, when),
+    updated: num(data.updated, when),
     drawingPath: str(data.drawingPath),
     mediaPath: str(data.mediaPath),
   }
@@ -122,7 +130,7 @@ export function categoryPool(notes: Note[], cat: string): Note[] {
 /**
  * A notebook as one markdown document, for snapshots: fragments in reading
  * order, a quiet date line whenever the day changes, images as references
- * to their vault files. #tags are kept as written but the snapshot note itself
+ * to their home files. #tags are kept as written but the snapshot note itself
  * carries none (see NoteType 'snapshot').
  */
 export function notebookMarkdown(title: string, notes: Note[]): string {

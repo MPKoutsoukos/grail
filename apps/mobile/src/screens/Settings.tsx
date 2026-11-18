@@ -8,6 +8,7 @@ import { Icon, Wordmark } from '../icons'
 import type { Data, ReviewTemplate } from '../data'
 import { LICENCE_TEXTS, NOTICES } from '../licences'
 import { buildInfo } from '../env'
+import { folderLabel } from '../store'
 
 // Shown in the app and in the store listing; the page is the grail-site repo, hosted on GitHub Pages.
 export const PRIVACY_URL = 'https://grailnotebook.com/privacy/'
@@ -51,14 +52,26 @@ function Swatch({ t, on, onPress }: { t: Theme; on: boolean; onPress: () => void
   )
 }
 
-export function SettingsScreen({ data, onBack, onOpenAbout }: { data: Data; onBack: () => void; onOpenAbout: () => void }) {
+export function SettingsScreen({ data, onBack, onOpenAbout, onOpenHome, onOpenTour }: {
+  data: Data; onBack: () => void; onOpenAbout: () => void; onOpenHome: () => void; onOpenTour: () => void
+}) {
   const { c } = useTheme()
   const st = data.settings
   const presets = PRESETS.some((p) => p.id === st.theme.id) ? PRESETS : [...PRESETS, st.theme]
+  const where = folderLabel(data.folder)
   return (
     <View style={{ flex: 1, backgroundColor: c.ink }}>
       <Header title="Settings" onBack={onBack} />
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60, gap: 8 }}>
+        <Eyebrow style={{ marginLeft: 4 }}>Your notes</Eyebrow>
+        <Card style={{ marginBottom: 18 }}>
+          <Row icon={<Icon.library color={c.paperDim} />} title="Home folder" hint={`${where.title}\n${where.detail}`}
+            right={<Icon.chevronRight color={c.paperDimmer} size={18} />} onPress={onOpenHome} />
+          <Divider />
+          <Row icon={<Icon.sparkle color={c.paperDim} />} title="Show the tour" hint="The four-step introduction from the first start"
+            right={<Icon.chevronRight color={c.paperDimmer} size={18} />} onPress={onOpenTour} />
+        </Card>
+
         <Eyebrow style={{ marginLeft: 4 }}>Theme</Eyebrow>
         <Card style={{ padding: 12, marginBottom: 18 }}>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 10 }}>
@@ -167,7 +180,7 @@ export function AboutScreen({ onBack, onOpenLicences }: { onBack: () => void; on
         <Eyebrow style={{ marginLeft: 4, marginBottom: 8 }}>Your privacy</Eyebrow>
         <Card style={{ marginBottom: 18 }}>
           <Row icon={<Icon.key color={c.paperDim} />} title="Only on this phone"
-            hint="Your notes, pictures and drawings are plain files in grail's own storage on this phone. grail has no account, no server, no ads and no analytics." />
+            hint="Your notes, pictures and drawings are plain files in your home folder on this phone: grail's own, or the one you chose (Settings → Home folder). grail has no account, no server, no ads and no analytics." />
           <Divider />
           <Row icon={<Icon.eye color={c.paperDim} />} title="Online only for link previews"
             hint="The only time grail uses the internet is to show a link preview: when you ask, or for every link if you turn previews on in Settings. It then fetches that page (for YouTube, YouTube's description of the video) and keeps the preview on this phone. The website sees that request, as with any visit. Nothing about your notes is sent." />

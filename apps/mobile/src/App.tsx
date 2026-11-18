@@ -33,6 +33,7 @@ import { TagScreen, TagsScreen } from './screens/Tags'
 import { EditorScreen } from './screens/Editor'
 import { DrawScreen } from './screens/Draw'
 import { AboutScreen, LicencesScreen, SettingsScreen } from './screens/Settings'
+import { HomeScreen, WelcomeScreen } from './screens/Welcome'
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 const inlineHtml = (s: string) => esc(s)
@@ -82,6 +83,8 @@ type Tab = 'browse' | 'read' | 'tags'
 type Route =
   | { name: 'editor'; id: string }
   | { name: 'settings' }
+  | { name: 'home' }
+  | { name: 'tour' }
   | { name: 'about' }
   | { name: 'licences' }
   | { name: 'tag'; tag: string }
@@ -99,7 +102,10 @@ export default function App() {
           {(data) => (
             <ThemeProvider theme={data.settings.theme} reading={data.settings.readingFont}>
               <PreviewsProvider always={data.settings.linkPreviews === true} setAlways={(v) => data.updateSetting('linkPreviews', v)}>
-                {fonts && !data.loading ? <Shell data={data} /> : <Splash />}
+                {!fonts ? <Splash />
+                  : data.firstRun ? <WelcomeScreen data={data} />
+                  : data.folderError ? <HomeScreen data={data} />
+                  : !data.loading ? <Shell data={data} /> : <Splash />}
               </PreviewsProvider>
             </ThemeProvider>
           )}
@@ -152,7 +158,7 @@ function Shell({ data }: { data: Data }) {
     if (r.canceled || !r.assets[0]) return
     const a = r.assets[0]
     const name = `${n.id}-media.${extForMime(a.mimeType ?? 'image/jpeg')}`
-    await data.vault!.store.write(name, await new File(a.uri).bytes())
+    await data.home!.store.write(name, await new File(a.uri).bytes())
     await data.saveNote({ ...n, mediaPath: name })
   }
 
@@ -163,8 +169,8 @@ function Shell({ data }: { data: Data }) {
   const readCtx = data.reviewView(readNotebook ?? '', readEligible)
   const allTags = collectCategories(data.notes)
   const makeExport = useCallback((book: string | null, compiled: Note[]) => async (kind: 'md' | 'pdf') => {
-    const vault = data.vault
-    if (!vault || compiled.length === 0) return
+    const home = data.home
+    if (!home || compiled.length === 0) return
     const id = String(Date.now())
     const when = new Date().toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
     const docTitle = book ? `#${book}` : 'Notebook'
@@ -191,7 +197,7 @@ function Shell({ data }: { data: Data }) {
       const { base64 } = await Print.printToFileAsync({ html, base64: true })
       if (!base64) throw new Error('The PDF came back empty')
       const name = `${id}.pdf`
-      await vault.saveImage(name, `data:application/pdf;base64,${base64}`)
+      await home.saveImage(name, `data:application/pdf;base64,${base64}`)
       await data.saveNote({ id, type: 'snapshot', title: noteTitle, body: '', tags: [], created: Date.now(), updated: Date.now(), mediaPath: name })
       done('A PDF copy')
     } catch (e) {
@@ -208,22 +214,22 @@ function Shell({ data }: { data: Data }) {
   if (top?.name === 'editor') {
     const note = data.notes.find((n) => n.id === top.id)
     if (note?.type === 'drawing') {
-      const vault = data.vault!
+      const home = data.home!
       overlay = (
         <DrawScreen key={note.id} note={note}
-          readScene={(id) => vault.readScene(id)}
-          readImage={(name) => vault.store.read(name)}
+          readScene={(id) => home.readScene(id)}
+          readImage={(name) => home.store.read(name)}
           onPersist={async (n, png, scene) => {
             // The scene is the source of truth; the PNG is a preview for lists and Read.
-            await vault.writeScene(n.id, scene)
+            await home.writeScene(n.id, scene)
             const old = n.drawingPath
             let drawingPath = old
             // A new name for every version: Android's image cache keys pictures by file, so
             // rewriting one name would keep showing the first version until grail restarted.
-            if (png) { try { drawingPath = await vault.saveImage(`${n.id}-${Date.now().toString(36)}.png`, png) } catch { /* keep the old preview */ } }
+            if (png) { try { drawingPath = await home.saveImage(`${n.id}-${Date.now().toString(36)}.png`, png) } catch { /* keep the old preview */ } }
             await data.saveNote({ ...n, ...(drawingPath ? { drawingPath } : {}) })
             // Only once the note points at the new picture does the old one go.
-            if (old && old !== drawingPath && !old.startsWith('data:')) await vault.store.remove(old).catch(() => {})
+            if (old && old !== drawingPath && !old.startsWith('data:')) await home.store.remove(old).catch(() => {})
           }}
           onDelete={(id) => { pop(); void data.deleteNote(id) }}
           onClose={pop} />
@@ -242,7 +248,9 @@ function Shell({ data }: { data: Data }) {
           onAttach={attach} />
       )
     }
-  } else if (top?.name === 'settings') overlay = <SettingsScreen data={data} onBack={pop} onOpenAbout={() => push({ name: 'about' })} />
+  } else if (top?.name === 'settings') overlay = <SettingsScreen data={data} onBack={pop} onOpenAbout={() => push({ name: 'about' })} onOpenHome={() => push({ name: 'home' })} onOpenTour={() => push({ name: 'tour' })} />
+  else if (top?.name === 'home') overlay = <HomeScreen data={data} onBack={pop} />
+  else if (top?.name === 'tour') overlay = <WelcomeScreen data={data} tourOnly onDone={pop} />
   else if (top?.name === 'about') overlay = <AboutScreen onBack={pop} onOpenLicences={() => push({ name: 'licences' })} />
   else if (top?.name === 'licences') overlay = <LicencesScreen onBack={pop} />
   else if (top?.name === 'tag') overlay = <TagScreen tag={top.tag} notes={data.notes} onBack={pop} onOpen={open} onRead={() => push({ name: 'tagRead', tag: top.tag })} />
