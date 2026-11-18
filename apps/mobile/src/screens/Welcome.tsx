@@ -218,16 +218,59 @@ function Dots({ n, at }: { n: number; at: number }) {
   )
 }
 
+/** The very first screen: what grail is, then the tour or straight on to the folder. */
+function WelcomePanel({ onTour, onSkip }: { onTour: () => void; onSkip: () => void }) {
+  const { c } = useTheme()
+  const insets = useSafeAreaInsets()
+  const ideas = ['One place for every idea', 'Catch it the moment it arrives', 'Read it back as one story']
+  return (
+    <View style={{ flex: 1, backgroundColor: c.ink, paddingTop: insets.top + 24, paddingBottom: insets.bottom + 16, paddingHorizontal: 28 }}>
+      <View style={{ flex: 1, justifyContent: 'center' }}>
+        <Animated.View entering={FadeIn.duration(500)}>
+          <Wordmark size={64} color={c.accentLight} />
+        </Animated.View>
+        <Animated.Text entering={FadeInDown.delay(250).duration(450)}
+          style={{ fontFamily: F.serif, fontSize: 38, lineHeight: 44, color: c.paper, marginTop: 18 }}>
+          Welcome to your grail diary.
+        </Animated.Text>
+        <Animated.Text entering={FadeInDown.delay(450).duration(450)}
+          style={{ fontFamily: F.sans, fontSize: 16.5, lineHeight: 25, color: c.paperDim, marginTop: 12 }}>
+          A notebook for catching every idea, and reading them back until the good ones add up.
+        </Animated.Text>
+        <View style={{ marginTop: 28, gap: 12 }}>
+          {ideas.map((t, i) => (
+            <Animated.View key={t} entering={FadeInDown.delay(700 + i * 160).duration(400)} style={[s.row, { gap: 12 }]}>
+              <View style={{ width: 26, height: 26, borderRadius: 9, backgroundColor: alpha(c.accent, 0.18), alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontFamily: F.mono, fontSize: 12, color: c.accentLight }}>{i + 1}</Text>
+              </View>
+              <Text style={{ fontFamily: F.sansMedium, fontSize: 15.5, color: c.paper }}>{t}</Text>
+            </Animated.View>
+          ))}
+        </View>
+      </View>
+      <Animated.View entering={FadeIn.delay(1100).duration(400)} style={{ gap: 10 }}>
+        <Button title="Show me around" onPress={onTour} />
+        <Button kind="quiet" title="Skip the tour" onPress={onSkip} />
+        <Text style={{ fontFamily: F.sans, fontSize: 12, color: c.paperDimmer, textAlign: 'center', marginTop: 6 }}>
+          Free and open source. No account, no ads, no tracking.
+        </Text>
+      </Animated.View>
+    </View>
+  )
+}
+
 export function WelcomeScreen({ data, tourOnly, onDone }: { data: Data; tourOnly?: boolean; onDone?: () => void }) {
   const { c } = useTheme()
   const insets = useSafeAreaInsets()
-  const [step, setStep] = useState(0)
+  // -1: the welcome panel (first start only), 0..last: the tour, past last: the folder choice
+  const [step, setStep] = useState(tourOnly ? 0 : -1)
   const last = TOUR.length - 1
   const finishTour = () => (tourOnly ? onDone?.() : setStep(TOUR.length))
 
   if (step >= TOUR.length) {
     return <FolderStep data={data} first onDone={() => data.finishWelcome()} onBack={() => setStep(last)} />
   }
+  if (step < 0) return <WelcomePanel onTour={() => setStep(0)} onSkip={() => setStep(TOUR.length)} />
   const t = TOUR[step]
   return (
     <View style={{ flex: 1, backgroundColor: c.ink, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 16, paddingHorizontal: 24 }}>
@@ -246,7 +289,7 @@ export function WelcomeScreen({ data, tourOnly, onDone }: { data: Data; tourOnly
       </Animated.View>
       <Dots n={TOUR.length} at={step} />
       <View style={[s.row, { gap: 10, marginTop: 20 }]}>
-        {step > 0 && <View style={{ flex: 1 }}><Button kind="quiet" title="Back" onPress={() => setStep(step - 1)} /></View>}
+        {(step > 0 || !tourOnly) && <View style={{ flex: 1 }}><Button kind="quiet" title="Back" onPress={() => setStep(step - 1)} /></View>}
         <View style={{ flex: 2 }}>
           <Button title={step === last ? (tourOnly ? 'Done' : 'Choose a folder') : 'Next'} onPress={() => (step === last ? finishTour() : setStep(step + 1))} />
         </View>
