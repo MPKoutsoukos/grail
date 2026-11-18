@@ -2,7 +2,7 @@ grail is a quiet place for writing that comes in pieces: thoughts, characters, p
 
 <b>Write in fragments</b>
 <ul>
-<li>Tap + and start writing. A fragment keeps its date and time, with no title needed.</li>
+<li>Tap + and start writing: the keyboard is up, and the fragment keeps its date and time, with no title needed. It saves as you type; Done closes it.</li>
 <li>Bold, italics, headings, lists and quotes, in plain markdown.</li>
 <li>Tables, edited as a simple grid.</li>
 <li>Pictures from your gallery, and drawings on a pen canvas.</li>
@@ -13,13 +13,19 @@ grail is a quiet place for writing that comes in pieces: thoughts, characters, p
 <li>Read stitches your fragments into a single flowing text, set in a calm serif.</li>
 <li>Four layouts: Manuscript, Timeline, Codex and Cards.</li>
 <li>A contents drawer for chapters, loose notes and anything you've set aside.</li>
-<li>Swipe a fragment left to delete it, or right to lift it out and place it somewhere else in the story.</li>
+<li>Swipe a fragment left to delete it, or right to lift it out and place it somewhere else in the story. Long-press to edit, move or take it out of the read.</li>
 </ul>
 
 <b>Tags as notebooks</b>
 <ul>
 <li>Write #tags anywhere. Every tag becomes its own notebook with its own read.</li>
 <li>Search with queries like "#travel #2026" or "#idea -#done", and save the ones you use.</li>
+</ul>
+
+<b>Nothing is lost</b>
+<ul>
+<li>Deleting moves a note to #deleted: hidden everywhere, until you search #deleted to find it again.</li>
+<li>Take the tag out to bring it back, or delete it from there for good.</li>
 </ul>
 
 <b>Snapshots and echoes</b>
@@ -30,13 +36,14 @@ grail is a quiet place for writing that comes in pieces: thoughts, characters, p
 
 <b>Make it yours</b>
 <ul>
+<li>A short illustrated tour on first start, and any time from Settings.</li>
 <li>Five themes: Ink, Reliquary, Vellum, Moss and Midnight.</li>
 <li>Serif, sans or mono reading text.</li>
 </ul>
 
 <b>Private by design</b>
 <ul>
-<li>Your notes stay on your phone, as plain markdown files.</li>
+<li>Your notes stay on your phone, as plain markdown files in a folder you choose: grail's own, or one of yours, new or with notes already in it.</li>
 <li>No account, no ads, no analytics, no tracking.</li>
 <li>Link previews, like in chat apps, only when you ask: grail goes online for nothing else.</li>
 </ul>

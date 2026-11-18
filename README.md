@@ -22,9 +22,16 @@ pick one source and stay with it.
 
 - **Browse**: every fragment, grouped by when you touched it, with search. An **Echo** at the top brings back an
   older fragment, anniversaries first.
+- **First start**: a five-step illustrated tour (write, read, shaping the read, tags, files), then the choice of
+  home folder, and a screen saying which folder is in use. Settings shows the tour again.
+- **Writing**: a new note opens with the keyboard up; it saves as you type, and **Done** saves and closes.
 - **Read**: your fragments stitched into one continuous text, titles hidden, set in a serif reading face, in four
-  layouts (Manuscript, Timeline, Codex, Cards). Reorder, set aside, or save the whole read as a Markdown or PDF
+  layouts (Manuscript, Timeline, Codex, Cards). Swipe a fragment left to delete it, right to pick it up and place
+  it elsewhere; long-press to edit, move or take it out of the read. Save the whole read as a Markdown or PDF
   snapshot.
+- **Nothing is lost**: deleting moves a note to `#deleted` (the tag is written into its text). It's hidden
+  everywhere until a search asks for `#deleted`; take the tag out to bring it back, or delete it again there to
+  remove the file for good.
 - **Tags**: every `#tag` with a count, queries (`#a #b`, `#a OR #b`, `#a -#b`), saved views, and a read of its own.
 - **Drawings, pictures and tables** in notes, five themes, and serif, sans or mono reading text.
 - **Link previews**, like in chat apps: a card with the page's title and picture under a link, fetched only
