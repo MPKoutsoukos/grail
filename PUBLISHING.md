@@ -67,7 +67,7 @@ Everything to paste is in [`store/listing.md`](store/listing.md).
 - [ ] Write, tag, draw, add a picture, make a table, take MD and PDF snapshots, and open the PDF.
 - [ ] A link in a note: Preview asks first, then shows the card; Settings → Link previews shows them all.
 - [ ] Rotate themes and fonts; TalkBack pass on the main screens.
-- [ ] Large-vault check: 1,000+ notes with pictures; watch scrolling and startup.
+- [ ] Large-home check: 1,000+ notes with pictures; watch scrolling and startup.
 - [ ] `aapt dump permissions` on the APK shows `INTERNET` (link previews only) and no camera, microphone or location.
 
 ## F-Droid

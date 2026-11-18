@@ -1,20 +1,21 @@
 # grail for Android
 
-Native Expo app (SDK 58, React Native 0.88), with the same vault format and themes as the desktop app.
+Native Expo app (SDK 58, React Native 0.88), with the same notes format and themes as the desktop app.
 Notes live only on the phone, as plain markdown files; there is no account and no sync. A notebook can be saved
 as a PDF snapshot and shared, for example to Google Drive (Settings → About explains how). The only network use
 is link previews, when the user asks for them (`src/linkpreview.tsx`).
 
 ```
 src/App.tsx          fonts, tabs (Browse · Read · Tags), screen stack, Android back, + menu
-src/data.tsx         the vault, notes, settings, saved views, Read order (same files as desktop)
-src/store.ts         the vault on disk: files in the app's documents folder, atomic writes
+src/data.tsx         the home (notes folder), notes, settings, saved views, Read order (same files as desktop)
+src/store.ts         the home on disk: grail's own folder, or a picked one (Android's folder picker)
+src/screens/Welcome.tsx  first start: the tour, the folder choice, which folder is in use
 src/linkpreview.tsx  link previews: asked for, fetched once, kept on the phone
 src/markdown.tsx     a small native markdown renderer
 src/ui.tsx           building blocks (spring presses, header, rows, fields)
 src/screens/         Browse, Read, Tags, Editor, Draw, TableEditor, Settings
 plugins/             Expo config plugins: release signing, short native paths, no dependencies-info block
-../../packages/core  shared with desktop: note format, vault, tags, themes, drawings
+../../packages/core  shared with desktop: note format, the home, tags, themes, drawings
 ```
 
 ## How it stays smooth

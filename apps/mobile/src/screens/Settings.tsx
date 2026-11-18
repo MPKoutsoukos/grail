@@ -173,7 +173,7 @@ export function AboutScreen({ onBack, onOpenLicences }: { onBack: () => void; on
           {step(4, 'In the viewer, tap Share (or Send a copy) and choose Drive, then Save. Pick a folder, for example one called grail.')}
           {step(5, 'On your computer, open drive.google.com, or the Google Drive folder if Google Drive for desktop is installed: the PDF is there.')}
           <Text style={{ fontFamily: F.sans, fontSize: 12.5, lineHeight: 19, color: c.paperDimmer }}>
-            A snapshot is a copy of that moment, not a live sync: notes you write afterwards stay on the phone until you save a new snapshot. Uninstalling grail deletes the notes on this phone, so keep a recent snapshot somewhere safe.
+            A snapshot is a copy of that moment, not a live sync: notes you write afterwards stay on the phone until you save a new snapshot. If your home is grail’s own folder, uninstalling grail deletes the notes on this phone, so keep a recent snapshot somewhere safe; a folder you picked (Settings → Home folder) stays after uninstalling, and a sync app can keep it in step with a computer.
           </Text>
         </Card>
 

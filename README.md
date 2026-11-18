@@ -35,7 +35,7 @@ inspired by [a video by Perry Daniels](https://www.youtube.com/watch?v=_QVYfPnNO
 
 ## Privacy
 
-Your notes, pictures and drawings stay in grail's own storage on your phone. grail goes online only for the
+Your notes, pictures and drawings stay on your phone, in your home folder: grail's own, or one you chose. grail goes online only for the
 link previews you ask for, and then fetches just that page. Nothing about your notes is ever sent anywhere, and
 the app has no analytics, crash reporting or Google services. The full policy is at
 https://grailnotebook.com/privacy/ (a copy is in [store/privacy.html](store/privacy.html)).
@@ -44,7 +44,7 @@ https://grailnotebook.com/privacy/ (a copy is in [store/privacy.html](store/priv
 
 ```
 apps/mobile/       the Android app: Expo (React Native), native lists, gestures and animation
-packages/core/     shared with grail-desktop: note format, vault, tags, themes, drawings (no dependencies)
+packages/core/     shared with grail-desktop: note format, the home (the notes folder), tags, themes, drawings (no dependencies)
 fdroid/            the F-Droid build recipe (metadata/com.grailnotebook.app.yml in fdroiddata)
 fastlane/          store texts, icon and screenshots, as F-Droid reads them
 store/             Google Play texts, privacy page, feature graphic and screenshots
@@ -66,6 +66,21 @@ grail-settings.json              theme, cover, reading preferences
 ```
 
 The same layout on the phone and in the desktop app's home folder.
+
+### The home folder and what Read gathers
+
+On first start, grail shows a four-step tour, then asks where the notes live: **grail's own folder** (the
+default, inside the app; uninstalling deletes it) or **a folder you pick** with Android's folder picker, new or
+one that already has notes. Android then lets grail into that folder only, with no storage permission. A last
+screen says which folder is in use, and Settings → Home folder always shows it and can change it (optionally
+copying the notes across).
+
+Each note keeps a small header (frontmatter): `id`, `type`, `title`, `tags`, `created`, `updated`,
+and for pictures `drawingPath` / `mediaPath`. **Read gathers the notes whose title is a date and time**
+(`2026-06-13 14:02`, which every new note gets); a tag's read gathers everything with that #tag. Plain markdown
+from another app (no header) shows in Browse and under the #tags in its text, dated by the file's modification
+time; it joins Read only if given a dated title. Saving such a note in grail adds the header to the file.
+Only files directly in the folder are read, not subfolders.
 
 ## Versions
 
