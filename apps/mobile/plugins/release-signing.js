@@ -1,8 +1,7 @@
 // Signs release builds with our own key instead of the public debug key every Expo project shares (anyone
 // holding that one could ship an "update" over this app). The key and its password live outside the project,
 // in the user's ~/.gradle/gradle.properties (GRAIL_RELEASE_*) or the pipeline's environment.
-// Without them the release APK comes out unsigned (app-release-unsigned.apk): that's what F-Droid builds,
-// since it signs every app with its own key.
+// Without them the release APK comes out unsigned (app-release-unsigned.apk), for signing elsewhere.
 const { withAppBuildGradle } = require('expo/config-plugins');
 
 module.exports = config => withAppBuildGradle(config, c => {

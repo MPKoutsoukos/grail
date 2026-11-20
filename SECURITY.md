@@ -13,11 +13,11 @@ fix or a plan as soon as the problem is understood. Credit in the release notes 
 
 ## Supported versions
 
-Only the latest release gets security fixes: the newest APK on the [Releases page](https://github.com/MPKoutsoukos/grail/releases/latest) (and, once it is there, the F-Droid build).
+Only the latest release gets security fixes: the newest APK on the [Releases page](https://github.com/MPKoutsoukos/grail/releases/latest).
 
 ## What's in scope
 
-The Android app (`apps/mobile`), the shared core (`packages/core`), the build pipelines and the F-Droid recipe.
+The Android app (`apps/mobile`), the shared core (`packages/core`), and the build pipelines.
 
 grail keeps notes on the user's own device and has no server or account, so most issues will be about the app
 itself: reading or changing files it shouldn't, running code from a note's content, or leaking anything over the

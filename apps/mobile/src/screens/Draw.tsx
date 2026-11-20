@@ -1,5 +1,5 @@
 // The phone drawing canvas, drawn with react-native-svg (plain source, no prebuilt
-// graphics binaries, so grail can be built from source by F-Droid). A stroke in
+// graphics binaries, which keeps the app small). A stroke in
 // progress lives entirely on the UI thread: the gesture worklet appends points and
 // Reanimated feeds the path straight to the native SVG view, so ink follows the
 // finger at display rate. Only finished strokes reach React.

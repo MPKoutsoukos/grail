@@ -12,11 +12,9 @@ Website: **https://grailnotebook.com**
 
 | | Where |
 |---|---|
-| Android | the [Releases page](https://github.com/MPKoutsoukos/grail/releases/latest) (APK); F-Droid submission in progress |
+| Android | the [Releases page](https://github.com/MPKoutsoukos/grail/releases/latest) (APK) |
 | Windows & Linux | [grail-desktop](https://github.com/MPKoutsoukos/grail-desktop/releases/latest) |
 
-The APK on the Releases page and the F-Droid build are signed with different keys, so one can't update the other:
-pick one source and stay with it.
 
 ## What it does
 
@@ -52,11 +50,9 @@ https://grailnotebook.com/privacy/ (a copy is in [store/privacy.html](store/priv
 ```
 apps/mobile/       the Android app: Expo (React Native), native lists, gestures and animation
 packages/core/     shared with grail-desktop: note format, the home (the notes folder), tags, themes, drawings (no dependencies)
-fdroid/            the F-Droid build recipe (metadata/com.grailnotebook.app.yml in fdroiddata)
-fastlane/          store texts, icon and screenshots, as F-Droid reads them
+fastlane/          store texts, icon and screenshots in the fastlane layout (for app stores)
 store/             Google Play texts, privacy page, feature graphic and screenshots
-scripts/           the F-Droid build check (run by the F-Droid workflow)
-PUBLISHING.md      how to publish: GitHub Releases, F-Droid, Google Play
+PUBLISHING.md      how to publish: GitHub Releases, Google Play
 SECURITY.md        how to report a security problem
 ```
 
@@ -93,8 +89,7 @@ Only files directly in the folder are read, not subfolders.
 
 `apps/mobile/app.json` holds the version (`expo.version`, e.g. `1.0.1`) and its version code
 (`android.versionCode` = major × 10000 + minor × 100 + patch, e.g. `10001`). Releases are tagged `v1.0.1`.
-F-Droid builds one APK per phone type with version code × 10 + 1, 2 or 4. The pipeline's own APKs use its run
-number as the build number. Details in [PUBLISHING.md](PUBLISHING.md).
+The pipeline's APKs use its run number as the build number. Details in [PUBLISHING.md](PUBLISHING.md).
 
 ## Branches, environments and pipelines
 
@@ -118,9 +113,6 @@ Each run type-checks the app, runs the core's tests, and builds a signed APK nam
 submodule) and writes the version and build number into its `mirror.json`, so every APK has a matching Windows
 and Linux build.
 
-**F-Droid check.** [The F-Droid workflow](.github/workflows/fdroid.yml) builds the recipe in `fdroid/` inside
-F-Droid's own build-server image, with `fdroid lint`, `rewritemeta`, the source scanner and
-`fdroid build --on-server`, on every push to `dev` that touches the app.
 
 ### Secrets the pipeline needs
 

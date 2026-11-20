@@ -57,8 +57,7 @@
         }
       ],
       "./plugins/release-signing",
-      "./plugins/short-native-paths",
-      "./plugins/no-dependencies-info"
+      "./plugins/short-native-paths"
     ]
   }
 }

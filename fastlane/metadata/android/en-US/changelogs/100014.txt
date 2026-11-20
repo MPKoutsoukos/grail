@@ -1,4 +1,0 @@
-First F-Droid release.
-
-- The drawing canvas is rebuilt without prebuilt graphics libraries, and the app is about a third smaller.
-- A drawing's picture in the list and in Read now updates as soon as you change it.
